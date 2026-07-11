@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steem Block Archeologist</title>
+    <title>Phoenix Prime on Steem</title>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -25,8 +25,17 @@
             --color-happy: #34d399; --bg-happy: #14532d; --border-happy: #166534;
             --color-bookend: #93c5fd; --bg-bookend: #1e3a8a; --border-bookend: #1d4ed8;
             --color-mill: #f43f5e; --bg-mill: #4c0519; --border-mill: #9f1239;
-            --color-zeroes: #e2e8f0; --bg-zeroes: #334155; --border-zeroes: #475569;
-            --color-kind: #a855f7; --bg-kind: #2e1065; --border-kind: #6b21a8;
+            --color-zeroes4: #e2e8f0; --bg-zeroes4: #334155; --border-zeroes4: #475569;
+            --color-zeroes5: #e2e8f0; --bg-zeroes5: #334155; --border-zeroes5: #475569;
+            --color-zeroes6: #e2e8f0; --bg-zeroes6: #334155; --border-zeroes6: #475569;
+            --color-zeroes7: #e2e8f0; --bg-zeroes7: #334155; --border-zeroes7: #475569;
+            --color-zeroes8: #e2e8f0; --bg-zeroes8: #334155; --border-zeroes8: #475569;
+            --color-kind5: #a855f7; --bg-kind5: #2e1065; --border-kind5: #6b21a8;
+            --color-kind6: #a855f7; --bg-kind6: #2e1065; --border-kind6: #6b21a8;
+            --color-kind7: #a855f7; --bg-kind7: #2e1065; --border-kind7: #6b21a8;
+            --color-kind8: #a855f7; --bg-kind8: #2e1065; --border-kind8: #6b21a8;
+            --color-kind9: #a855f7; --bg-kind9: #2e1065; --border-kind9: #6b21a8;
+            --color-kind10: #a855f7; --bg-kind10: #2e1065; --border-kind10: #6b21a8;
             --color-std: #cbd5e1; --bg-std: #334155; --border-std: #475569;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 2rem; display: flex; flex-direction: column; align-items: center; }
@@ -52,7 +61,12 @@
        .lbl-harshad { color: var(--color-harshad); }.lbl-biclass { color: var(--color-biclass); }
        .lbl-radar { color: var(--color-radar); }.lbl-happy { color: var(--color-happy); }
        .lbl-bookend { color: var(--color-bookend); }.lbl-mill { color: var(--color-mill); }
-       .lbl-zeroes { color: var(--color-zeroes); }.lbl-kind { color: var(--color-kind); }
+       .lbl-zeroes4 { color: var(--color-zeroes4); }.lbl-zeroes5 { color: var(--color-zeroes5); }
+       .lbl-zeroes6 { color: var(--color-zeroes6); }.lbl-zeroes7 { color: var(--color-zeroes7); }
+       .lbl-zeroes8 { color: var(--color-zeroes8); }.lbl-kind5 { color: var(--color-kind5); }
+       .lbl-kind6 { color: var(--color-kind6); }.lbl-kind7 { color: var(--color-kind7); }
+       .lbl-kind8 { color: var(--color-kind8); }.lbl-kind9 { color: var(--color-kind9); }
+       .lbl-kind10 { color: var(--color-kind10); }
        .lbl-std { color: var(--color-std); }
        .results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
        .card { background-color: var(--card-bg); border: 1px solid #334155; border-radius: 0.75rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 / 0.1); }
@@ -77,43 +91,62 @@
        .badge-happy { background-color: var(--bg-happy); color: var(--color-happy); border: 1px solid var(--border-happy); }
        .badge-bookend { background-color: var(--bg-bookend); color: var(--color-bookend); border: 1px solid var(--border-bookend); }
        .badge-mill { background-color: var(--bg-mill); color: var(--color-mill); border: 1px solid var(--border-mill); }
-       .badge-zeroes { background-color: var(--bg-zeroes); color: var(--color-zeroes); border: 1px solid var(--border-zeroes); }
-       .badge-kind { background-color: var(--bg-kind); color: var(--color-kind); border: 1px solid var(--border-kind); }
-       .status { text-align: center; color: var(--text-muted); font-style: italic; margin-bottom: 1rem; }
+       .badge-zeroes4 { background-color: var(--bg-zeroes4); color: var(--color-zeroes4); border: 1px solid var(--border-zeroes4); }
+       .badge-zeroes5 { background-color: var(--bg-zeroes5); color: var(--color-zeroes5); border: 1px solid var(--border-zeroes5); }
+       .badge-zeroes6 { background-color: var(--bg-zeroes6); color: var(--color-zeroes6); border: 1px solid var(--border-zeroes6); }
+       .badge-zeroes7 { background-color: var(--bg-zeroes7); color: var(--color-zeroes7); border: 1px solid var(--border-zeroes7); }
+       .badge-zeroes8 { background-color: var(--bg-zeroes8); color: var(--color-zeroes8); border: 1px solid var(--border-zeroes8); }
+       .badge-kind5 { background-color: var(--bg-kind5); color: var(--color-kind5); border: 1px solid var(--border-kind5); }
+       .badge-kind6 { background-color: var(--bg-kind6); color: var(--color-kind6); border: 1px solid var(--border-kind6); }
+       .badge-kind7 { background-color: var(--bg-kind7); color: var(--color-kind7); border: 1px solid var(--border-kind7); }
+       .badge-kind8 { background-color: var(--bg-kind8); color: var(--color-kind8); border: 1px solid var(--border-kind8); }
+       .badge-kind9 { background-color: var(--bg-kind9); color: var(--color-kind9); border: 1px solid var(--border-kind9); }
+       .badge-kind10 { background-color: var(--bg-kind10); color: var(--color-kind10); border: 1px solid var(--border-kind10); }
+        .stat-label[title], .badge[title] { cursor: help; }
+        .status { text-align: center; color: var(--text-muted); font-style: italic; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
 <div class="container">
     <header>
-        <h1>Steem Block Archeologist</h1>
+        <h1>Phoenix Prime on Steem</h1>
         <p>Deep-scan full history for @null burns to discover your mathematical block attributes.</p>
     </header>
     <div class="search-box">
-        <input type="text" id="username" placeholder="Enter Steem username (e.g., remlaps)" value="">
+        <input type="text" id="username" placeholder="Enter Steem username (e.g., remlaps)" value="" onkeydown="if(event.key==='Enter')scanBurnHistory()">
         <button id="scan-btn" onclick="scanBurnHistory()">Scan Entire History</button>
     </div>
     <div id="status" class="status"></div>
     <div id="summary-dashboard" class="summary-dashboard">
-        <div class="summary-title">Archeology Metrics Summary</div>
+        <div class="summary-title">Phoenix Prime Metrics Summary</div>
         <div class="summary-grid">
-            <div class="summary-stat" style="border-color: #4b5563;"><div class="stat-label lbl-total">Total Burned</div><div id="stat-total" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-even);"><div class="stat-label lbl-even">Even</div><div id="stat-even" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-odd);"><div class="stat-label lbl-odd">Odd</div><div id="stat-odd" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal">Palindrome</div><div id="stat-pal" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-harshad);"><div class="stat-label lbl-harshad">Harshad</div><div id="stat-harshad" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-biclass);"><div class="stat-label lbl-biclass">Bi-Class</div><div id="stat-biclass" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-radar);"><div class="stat-label lbl-radar">Radar</div><div id="stat-radar" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-happy);"><div class="stat-label lbl-happy">Happy Block</div><div id="stat-happy" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-bookend);"><div class="stat-label lbl-bookend">3-Dig Bookend</div><div id="stat-bookend" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-mill);"><div class="stat-label lbl-mill">Millennium</div><div id="stat-mill" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-zeroes);"><div class="stat-label lbl-zeroes">4-8 Zeroes</div><div id="stat-zeroes" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-kind);"><div class="stat-label lbl-kind">5-10 Of A Kind</div><div id="stat-kind" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-prime);"><div class="stat-label lbl-prime">Prime Mystic</div><div id="stat-prime" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-fib);"><div class="stat-label lbl-fib">Fibonacci</div><div id="stat-fib" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-mile);"><div class="stat-label lbl-mile">Century</div><div id="stat-mile" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-bin);"><div class="stat-label lbl-bin">Binary</div><div id="stat-bin" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-std);"><div class="stat-label lbl-std">Standard</div><div id="stat-std" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--accent-gold);"><div class="stat-label" style="color: var(--accent-gold);">Burn King</div><div id="stat-king" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: #4b5563;"><div class="stat-label lbl-total" title="Total number of blocks where you were the burn king.">Total Burned</div><div id="stat-total" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-even);"><div class="stat-label lbl-even" title="Block number is evenly divisible by 2.">Even</div><div id="stat-even" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-odd);"><div class="stat-label lbl-odd" title="Block number is not evenly divisible by 2.">Odd</div><div id="stat-odd" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal" title="Block number reads the same forwards and backwards.">Palindrome</div><div id="stat-pal" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-harshad);"><div class="stat-label lbl-harshad" title="Block number is divisible by the sum of its own digits.">Harshad</div><div id="stat-harshad" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-biclass);"><div class="stat-label lbl-biclass" title="Block number uses exactly two distinct digits.">Bi-Class</div><div id="stat-biclass" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-radar);"><div class="stat-label lbl-radar" title="Block number's first half equals its second half.">Radar</div><div id="stat-radar" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-happy);"><div class="stat-label lbl-happy" title="Repeated sum-of-squares of digits eventually reaches 1.">Happy Block</div><div id="stat-happy" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-bookend);"><div class="stat-label lbl-bookend" title="First 3 digits match the last 3 digits.">3-Dig Bookend</div><div id="stat-bookend" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-mill);"><div class="stat-label lbl-mill" title="Block number is evenly divisible by 1000.">Millennium</div><div id="stat-mill" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-zeroes4);"><div class="stat-label lbl-zeroes4" title="Block number ends with exactly 4 trailing zeros.">4 Zeroes</div><div id="stat-zeroes4" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-zeroes5);"><div class="stat-label lbl-zeroes5" title="Block number ends with exactly 5 trailing zeros.">5 Zeroes</div><div id="stat-zeroes5" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-zeroes6);"><div class="stat-label lbl-zeroes6" title="Block number ends with exactly 6 trailing zeros.">6 Zeroes</div><div id="stat-zeroes6" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-zeroes7);"><div class="stat-label lbl-zeroes7" title="Block number ends with exactly 7 trailing zeros.">7 Zeroes</div><div id="stat-zeroes7" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-zeroes8);"><div class="stat-label lbl-zeroes8" title="Block number ends with exactly 8 trailing zeros.">8 Zeroes</div><div id="stat-zeroes8" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-kind5);"><div class="stat-label lbl-kind5" title="A single digit appears exactly 5 times in the block number.">5 Of A Kind</div><div id="stat-kind5" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-kind6);"><div class="stat-label lbl-kind6" title="A single digit appears exactly 6 times in the block number.">6 Of A Kind</div><div id="stat-kind6" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-kind7);"><div class="stat-label lbl-kind7" title="A single digit appears exactly 7 times in the block number.">7 Of A Kind</div><div id="stat-kind7" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-kind8);"><div class="stat-label lbl-kind8" title="A single digit appears exactly 8 times in the block number.">8 Of A Kind</div><div id="stat-kind8" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-kind9);"><div class="stat-label lbl-kind9" title="A single digit appears exactly 9 times in the block number.">9 Of A Kind</div><div id="stat-kind9" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-kind10);"><div class="stat-label lbl-kind10" title="A single digit appears exactly 10 times in the block number.">10 Of A Kind</div><div id="stat-kind10" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-prime);"><div class="stat-label lbl-prime" title="Block number has no positive divisors other than 1 and itself.">Phoenix Prime</div><div id="stat-prime" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-fib);"><div class="stat-label lbl-fib" title="Block number is part of the Fibonacci sequence.">Fibonacci</div><div id="stat-fib" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-mile);"><div class="stat-label lbl-mile" title="Block number is evenly divisible by 100.">Century</div><div id="stat-mile" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-bin);"><div class="stat-label lbl-bin" title="Block number consists only of digits 0 and 1.">Binary</div><div id="stat-bin" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-std);"><div class="stat-label lbl-std" title="Block has no special mathematical or structural traits.">Standard</div><div id="stat-std" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--accent-gold);"><div class="stat-label" style="color: var(--accent-gold);" title="You burned more of this asset than any other account in this block.">Burn King</div><div id="stat-king" class="stat-val">0</div></div>
         </div>
     </div>
     <div id="results" class="results-grid"></div>
@@ -132,8 +165,8 @@
     function isHappyNumber(num){let seen=new Set();while(num!==1&&!seen.has(num)){seen.add(num);let sum=0;while(num>0){let digit=num%10;sum+=digit*digit;num=Math.floor(num/10)}num=sum}return num===1}
     function is3DigitBookend(str){if(str.length<6)return false;return str.substring(0,3)===str.substring(str.length-3)}
     function isMillennium(num){return num%1000===0}
-    function has4To8Zeroes(str){const match=str.match(/0+$/);if(!match)return false;const count=match[0].length;return count>=4&&count<=8}
-    function is5To10OfAKind(str){const counts={};for(let char of str){counts[char]=(counts[char]||0)+1}for(let char in counts){if(counts[char]>=5&&counts[char]<=10)return true}return false}
+    function countTrailingZeroes(str){const match=str.match(/0+$/);return match?match[0].length:0}
+    function countMaxSameDigit(str){const counts={};for(let char of str){counts[char]=(counts[char]||0)+1}let max=0;for(let char in counts){if(counts[char]>max)max=counts[char]}return max}
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     function resolveColIdx(cols,name,fallback){if(Array.isArray(cols)){const idx=cols.indexOf(name);return idx===-1?fallback:idx}else if(cols&&typeof cols==='object'){if(typeof cols[name]!=='undefined')return cols[name];const idx=Object.keys(cols).indexOf(name);return idx===-1?fallback:idx}return fallback}
 
@@ -190,7 +223,7 @@
         const statusDiv=document.getElementById('status');const resultsDiv=document.getElementById('results');const dashboard=document.getElementById('summary-dashboard');const btn=document.getElementById('scan-btn');
         if(!username){statusDiv.innerText="Please enter a username.";return}
         btn.disabled=true;resultsDiv.innerHTML="";dashboard.style.display="none";statusDiv.innerText="Querying SDS for full burn history...";
-        let stats={total:0,even:0,odd:0,palindrome:0,harshad:0,biclass:0,radar:0,happy:0,bookend:0,mill:0,zeroes:0,kind:0,prime:0,fib:0,milestone:0,binary:0,standard:0,king:0};
+        let stats={total:0,even:0,odd:0,palindrome:0,harshad:0,biclass:0,radar:0,happy:0,bookend:0,mill:0,zeroes4:0,zeroes5:0,zeroes6:0,zeroes7:0,zeroes8:0,kind5:0,kind6:0,kind7:0,kind8:0,kind9:0,kind10:0,prime:0,fib:0,milestone:0,binary:0,standard:0,king:0};
         try{
             const foundBlocks=await fetchAllUserBurns(username,statusDiv);
             if(foundBlocks.length===0){statusDiv.innerText="Scan complete. No @null burn operations found.";btn.disabled=false;return}
@@ -202,8 +235,8 @@
             const kingBlocks=[];for(let i=0;i<foundBlocks.length;i++){const dominance=dominanceResults[i];if(dominance&&dominance.isHighest){kingBlocks.push({item:foundBlocks[i],dominance})}}
             if(kingBlocks.length===0){statusDiv.innerText=`Scan complete. Found ${foundBlocks.length} burn(s), but none were burn-king for their block.`;btn.disabled=false;return}
             statusDiv.innerText=`Confirmed ${kingBlocks.length} burn-king block(s) out of ${foundBlocks.length} total burns. Running architectural analysis matrix...`;
-            kingBlocks.forEach(({item,dominance})=>{const n=item.blockNum;const s=n.toString();let badgeHTML='';let hasSpecialTrait=false;stats.total++;stats.king++;if(n%2===0){badgeHTML+='<span class="badge badge-even">Even Block</span>';stats.even++}else{badgeHTML+='<span class="badge badge-odd">Odd Block</span>';stats.odd++}if(isPalindrome(s)){badgeHTML+='<span class="badge badge-pal">Palindrome</span>';stats.palindrome++;hasSpecialTrait=true}if(isHarshad(n,s)){badgeHTML+='<span class="badge badge-harshad">Harshad</span>';stats.harshad++;hasSpecialTrait=true}if(isBiClass(s)){badgeHTML+='<span class="badge badge-biclass">Bi-Class</span>';stats.biclass++;hasSpecialTrait=true}if(isRadar(s)){badgeHTML+='<span class="badge badge-radar">Radar</span>';stats.radar++;hasSpecialTrait=true}if(isHappyNumber(n)){badgeHTML+='<span class="badge badge-happy">Happy Block</span>';stats.happy++;hasSpecialTrait=true}if(is3DigitBookend(s)){badgeHTML+='<span class="badge badge-bookend">3-Dig Bookend</span>';stats.bookend++;hasSpecialTrait=true}if(isMillennium(n)){badgeHTML+='<span class="badge badge-mill">Millennium</span>';stats.mill++;hasSpecialTrait=true}if(has4To8Zeroes(s)){badgeHTML+='<span class="badge badge-zeroes">4-8 Zeroes</span>';stats.zeroes++;hasSpecialTrait=true}if(is5To10OfAKind(s)){badgeHTML+='<span class="badge badge-kind">5-10 Of A Kind</span>';stats.kind++;hasSpecialTrait=true}if(isPrime(n)){badgeHTML+='<span class="badge badge-prime">Prime Mystic</span>';stats.prime++;hasSpecialTrait=true}if(isFibonacci(n)){badgeHTML+='<span class="badge badge-fib">Fibonacci Helix</span>';stats.fib++;hasSpecialTrait=true}if(isMilestone(n)){badgeHTML+='<span class="badge badge-milestone">Century Block</span>';stats.milestone++;hasSpecialTrait=true}if(isBinary(n)){badgeHTML+='<span class="badge badge-binary">Binary Code</span>';stats.binary++;hasSpecialTrait=true}if(!hasSpecialTrait){stats.standard++}const crownHTML='<span class="crown-badge">👑 Burn King</span>';const dominanceHTML=dominance.competitorsCount>1?`<div class="dominance-note">Dominated block over ${dominance.competitorsCount-1} other burner(s).</div>`:`<div class="dominance-note">Solo burner in this block.</div>`;const card=document.createElement('div');card.className='card king';card.innerHTML=`<div class="card-top-row"><div class="block-num">Block #${n.toLocaleString()}</div>${crownHTML}</div><div class="burn-val">Burned: ${item.burnAmount}</div>${dominanceHTML}<div class="badges-container">${badgeHTML}</div>`;resultsDiv.appendChild(card)});
-            document.getElementById('stat-total').innerText=stats.total.toLocaleString();document.getElementById('stat-even').innerText=stats.even.toLocaleString();document.getElementById('stat-odd').innerText=stats.odd.toLocaleString();document.getElementById('stat-pal').innerText=stats.palindrome.toLocaleString();document.getElementById('stat-harshad').innerText=stats.harshad.toLocaleString();document.getElementById('stat-biclass').innerText=stats.biclass.toLocaleString();document.getElementById('stat-radar').innerText=stats.radar.toLocaleString();document.getElementById('stat-happy').innerText=stats.happy.toLocaleString();document.getElementById('stat-bookend').innerText=stats.bookend.toLocaleString();document.getElementById('stat-mill').innerText=stats.mill.toLocaleString();document.getElementById('stat-zeroes').innerText=stats.zeroes.toLocaleString();document.getElementById('stat-kind').innerText=stats.kind.toLocaleString();document.getElementById('stat-prime').innerText=stats.prime.toLocaleString();document.getElementById('stat-fib').innerText=stats.fib.toLocaleString();document.getElementById('stat-mile').innerText=stats.milestone.toLocaleString();document.getElementById('stat-bin').innerText=stats.binary.toLocaleString();document.getElementById('stat-std').innerText=stats.standard.toLocaleString();document.getElementById('stat-king').innerText=stats.king.toLocaleString();dashboard.style.display="block";statusDiv.innerText=`Report complete! Archeology engine successfully isolated ${foundBlocks.length} collection records.`;
+            kingBlocks.forEach(({item,dominance})=>{const n=item.blockNum;const s=n.toString();let badgeHTML='';let hasSpecialTrait=false;stats.total++;stats.king++;if(n%2===0){badgeHTML+='<span class="badge badge-even" title="Block number is evenly divisible by 2.">Even Block</span>';stats.even++}else{badgeHTML+='<span class="badge badge-odd" title="Block number is not evenly divisible by 2.">Odd Block</span>';stats.odd++}if(isPalindrome(s)){badgeHTML+='<span class="badge badge-pal" title="Block number reads the same forwards and backwards.">Palindrome</span>';stats.palindrome++;hasSpecialTrait=true}if(isHarshad(n,s)){badgeHTML+='<span class="badge badge-harshad" title="Block number is divisible by the sum of its own digits.">Harshad</span>';stats.harshad++;hasSpecialTrait=true}if(isBiClass(s)){badgeHTML+='<span class="badge badge-biclass" title="Block number uses exactly two distinct digits.">Bi-Class</span>';stats.biclass++;hasSpecialTrait=true}if(isRadar(s)){badgeHTML+='<span class="badge badge-radar" title="Block number&#39;s first half equals its second half.">Radar</span>';stats.radar++;hasSpecialTrait=true}if(isHappyNumber(n)){badgeHTML+='<span class="badge badge-happy" title="Repeated sum-of-squares of digits eventually reaches 1.">Happy Block</span>';stats.happy++;hasSpecialTrait=true}if(is3DigitBookend(s)){badgeHTML+='<span class="badge badge-bookend" title="First 3 digits match the last 3 digits.">3-Dig Bookend</span>';stats.bookend++;hasSpecialTrait=true}if(isMillennium(n)){badgeHTML+='<span class="badge badge-mill" title="Block number is evenly divisible by 1000.">Millennium</span>';stats.mill++;hasSpecialTrait=true}const tz=countTrailingZeroes(s);if(tz===4){badgeHTML+='<span class="badge badge-zeroes4" title="Block number ends with exactly 4 trailing zeros.">4 Zeroes</span>';stats.zeroes4++;hasSpecialTrait=true}else if(tz===5){badgeHTML+='<span class="badge badge-zeroes5" title="Block number ends with exactly 5 trailing zeros.">5 Zeroes</span>';stats.zeroes5++;hasSpecialTrait=true}else if(tz===6){badgeHTML+='<span class="badge badge-zeroes6" title="Block number ends with exactly 6 trailing zeros.">6 Zeroes</span>';stats.zeroes6++;hasSpecialTrait=true}else if(tz===7){badgeHTML+='<span class="badge badge-zeroes7" title="Block number ends with exactly 7 trailing zeros.">7 Zeroes</span>';stats.zeroes7++;hasSpecialTrait=true}else if(tz===8){badgeHTML+='<span class="badge badge-zeroes8" title="Block number ends with exactly 8 trailing zeros.">8 Zeroes</span>';stats.zeroes8++;hasSpecialTrait=true}const mcd=countMaxSameDigit(s);if(mcd===5){badgeHTML+='<span class="badge badge-kind5" title="A single digit appears exactly 5 times in the block number.">5 Of A Kind</span>';stats.kind5++;hasSpecialTrait=true}else if(mcd===6){badgeHTML+='<span class="badge badge-kind6" title="A single digit appears exactly 6 times in the block number.">6 Of A Kind</span>';stats.kind6++;hasSpecialTrait=true}else if(mcd===7){badgeHTML+='<span class="badge badge-kind7" title="A single digit appears exactly 7 times in the block number.">7 Of A Kind</span>';stats.kind7++;hasSpecialTrait=true}else if(mcd===8){badgeHTML+='<span class="badge badge-kind8" title="A single digit appears exactly 8 times in the block number.">8 Of A Kind</span>';stats.kind8++;hasSpecialTrait=true}else if(mcd===9){badgeHTML+='<span class="badge badge-kind9" title="A single digit appears exactly 9 times in the block number.">9 Of A Kind</span>';stats.kind9++;hasSpecialTrait=true}else if(mcd===10){badgeHTML+='<span class="badge badge-kind10" title="A single digit appears exactly 10 times in the block number.">10 Of A Kind</span>';stats.kind10++;hasSpecialTrait=true}if(isPrime(n)){badgeHTML+='<span class="badge badge-prime" title="Block number has no positive divisors other than 1 and itself.">Phoenix Prime</span>';stats.prime++;hasSpecialTrait=true}if(isFibonacci(n)){badgeHTML+='<span class="badge badge-fib" title="Block number is part of the Fibonacci sequence.">Fibonacci Helix</span>';stats.fib++;hasSpecialTrait=true}if(isMilestone(n)){badgeHTML+='<span class="badge badge-milestone" title="Block number is evenly divisible by 100.">Century Block</span>';stats.milestone++;hasSpecialTrait=true}if(isBinary(n)){badgeHTML+='<span class="badge badge-binary" title="Block number consists only of digits 0 and 1.">Binary Code</span>';stats.binary++;hasSpecialTrait=true}if(!hasSpecialTrait){stats.standard++}const crownHTML='<span class="crown-badge">👑 Burn King</span>';const dominanceHTML=dominance.competitorsCount>1?`<div class="dominance-note">Dominated block over ${dominance.competitorsCount-1} other burner(s).</div>`:`<div class="dominance-note">Solo burner in this block.</div>`;const card=document.createElement('div');card.className='card king';card.innerHTML=`<div class="card-top-row"><div class="block-num">Block #${n.toLocaleString()}</div>${crownHTML}</div><div class="burn-val">Burned: ${item.burnAmount}</div>${dominanceHTML}<div class="badges-container">${badgeHTML}</div>`;resultsDiv.appendChild(card)});
+            document.getElementById('stat-total').innerText=stats.total.toLocaleString();document.getElementById('stat-even').innerText=stats.even.toLocaleString();document.getElementById('stat-odd').innerText=stats.odd.toLocaleString();document.getElementById('stat-pal').innerText=stats.palindrome.toLocaleString();document.getElementById('stat-harshad').innerText=stats.harshad.toLocaleString();document.getElementById('stat-biclass').innerText=stats.biclass.toLocaleString();document.getElementById('stat-radar').innerText=stats.radar.toLocaleString();document.getElementById('stat-happy').innerText=stats.happy.toLocaleString();document.getElementById('stat-bookend').innerText=stats.bookend.toLocaleString();document.getElementById('stat-mill').innerText=stats.mill.toLocaleString();document.getElementById('stat-zeroes4').innerText=stats.zeroes4.toLocaleString();document.getElementById('stat-zeroes5').innerText=stats.zeroes5.toLocaleString();document.getElementById('stat-zeroes6').innerText=stats.zeroes6.toLocaleString();document.getElementById('stat-zeroes7').innerText=stats.zeroes7.toLocaleString();document.getElementById('stat-zeroes8').innerText=stats.zeroes8.toLocaleString();document.getElementById('stat-kind5').innerText=stats.kind5.toLocaleString();document.getElementById('stat-kind6').innerText=stats.kind6.toLocaleString();document.getElementById('stat-kind7').innerText=stats.kind7.toLocaleString();document.getElementById('stat-kind8').innerText=stats.kind8.toLocaleString();document.getElementById('stat-kind9').innerText=stats.kind9.toLocaleString();document.getElementById('stat-kind10').innerText=stats.kind10.toLocaleString();document.getElementById('stat-prime').innerText=stats.prime.toLocaleString();document.getElementById('stat-fib').innerText=stats.fib.toLocaleString();document.getElementById('stat-mile').innerText=stats.milestone.toLocaleString();document.getElementById('stat-bin').innerText=stats.binary.toLocaleString();document.getElementById('stat-std').innerText=stats.standard.toLocaleString();document.getElementById('stat-king').innerText=stats.king.toLocaleString();dashboard.style.display="block";statusDiv.innerText=`Report complete! Phoenix Prime engine successfully isolated ${foundBlocks.length} collection records.`;
         }catch(error){console.error(error);statusDiv.innerText=`Query Error: ${error.message}. Ensure the username is correct and SDS is reachable.`}finally{btn.disabled=false}
     }
 </script>
