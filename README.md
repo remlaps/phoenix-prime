@@ -1,6 +1,11 @@
 # Steem Block Archeologist 🏛️🔢
 
 Steem Block Archeologist is an open-source, client-side web application designed to scan an account's entire transaction history for `@null` burn operations. When a burn operation is found, the app subjects the corresponding transaction block number to a comprehensive mathematical and structural analysis matrix, cataloging rare data configurations and collecting them into a visual dashboard.
+### Block Dominance Matrix (New)
+
+The tool goes beyond basic history scanning by actively cross-examining the global ledger state for competitive validation:
+
+*   **Burn King (STEEM/SBD):** When a personal burn is identified, the engine dynamically fetches the entire parent block (`condenser_api.get_block`). It aggregates all competitive transfer operations directed to `@null` within those 3 seconds, evaluating whether your account was the absolute highest burner of that asset class in the entire block.
 
 ## 📊 Block Archeology Classifications
 
