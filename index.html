@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steem Block Archeologist 🏛️</title>
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-gold: #f59e0b;
+            --accent-blue: #38bdf8;
+            --accent-green: #10b981;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        h1 { margin: 0 0 0.5rem 0; font-size: 2rem; color: var(--text-main); }
+        p.subtitle { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
+
+        .control-panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        
+        input[type="text"] {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.6rem 1rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            width: 250px;
+        }
+
+        button {
+            background-color: var(--accent-blue);
+            color: #000;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { background-color: var(--border-color); color: var(--text-muted); cursor: not-allowed; }
+
+        #status {
+            margin-left: auto;
+            color: var(--accent-gold);
+            font-size: 0.9rem;
+            font-weight: 500;
+            align-self: center;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .block-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .block-card.king {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .block-num { font-size: 1.25rem; font-weight: 700; font-family: monospace; }
+        
+        .crown-badge {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--accent-gold);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .burn-info {
+            font-size: 0.95rem;
+            border-left: 3px solid var(--accent-blue);
+            padding-left: 0.5rem;
+            margin: 0.25rem 0;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-top: auto;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background-color: var(--bg-main);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .tag.rare {
+            background-color: rgba(56, 189, 248, 0.1);
+            color: var(--accent-blue);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .leaderboard-details {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Steem Block Archeologist 🏛️🔢</h1>
+        <p class="subtitle">Scan account histories for @null burns and evaluate mathematical properties alongside block dominance analytics.</p>
+    </header>
+
+    <div class="control-panel">
+        <div class="input-group">
+            <label for="username">Steem Account</label>
+            <input type="text" id="username" placeholder="e.g., remlaps" value="">
+        </div>
+        <button id="scanBtn" onclick="startArcheologyScan()">Scan Entire History</button>
+        <div id="status">Ready to scan.</div>
+    </div>
+
+    <div class="dashboard-grid" id="dashboard">
+        <!-- Archeology Cards will inject dynamically here -->
+    </div>
+</div>
+
+<script>
+    // --- SLEEP UTILITY FOR RATE LIMITING ---
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    // --- MATHEMATICAL EVALUATORS ---
+    function isPalindrome(numStr) {
+        return numStr === numStr.split('').reverse().join('');
+    }
+
+    function isRadar(numStr) {
+        if (numStr.length % 2 !== 0) return false;
+        const mid = numStr.length / 2;
+        return numStr.slice(0, mid) === numStr.slice(mid);
+    }
+
+    function isBookend(numStr) {
+        if (numStr.length < 6) return false;
+        return numStr.slice(0, 3) === numStr.slice(-3);
+    }
+
+    function isBiClass(numStr) {
+        const uniqueDigits = new Set(numStr);
+        return uniqueDigits.size === 2;
+    }
+
+    function countOccurrences(numStr) {
+        const counts = {};
+        let maxCount = 0;
+        for (const digit of numStr) {
+            counts[digit] = (counts[digit] || 0) + 1;
+            if (counts[digit] > maxCount) maxCount = counts[digit];
+        }
+        return maxCount;
+    }
+
+    function trailingZeroesCount(numStr) {
+        const match = numStr.match(/0+$/);
+        return match ? match[0].length : 0;
+    }
+
+    function isHarshad(num) {
+        const sum = num.toString().split('').reduce((acc, d) => acc + parseInt(d), 0);
+        return num % sum === 0;
+    }
+
+    function isHappy(num) {
+        const seen = new Set();
+        while (num !== 1 && !seen.has(num)) {
+            seen.add(num);
+            num = num.toString().split('').reduce((acc, d) => acc + Math.pow(parseInt(d), 2), 0);
+        }
+        return num === 1;
+    }
+
+    function isPrime(num) {
+        if (num <= 1) return false;
+        if (num <= 3) return true;
+        if (num % 2 === 0 || num % 3 === 0) return false;
+        for (let i = 5; i * i <= num; i += 6) {
+            if (num % i === 0 || num % (i + 2) === 0) return false;
+        }
+        return true;
+    }
+
+    function isFibonacci(num) {
+        const isPerfectSquare = x => Math.sqrt(x) % 1 === 0;
+        return isPerfectSquare(5 * num * num + 4) || isPerfectSquare(5 * num * num - 4);
+    }
+
+    function isBinaryCode(numStr) {
+        return /^[01]+$/.test(numStr);
+    }
+
+    // Run structural and mathematical validations
+    function runArcheologyMatrix(blockNum) {
+        const s = blockNum.toString();
+        const n = blockNum;
+        const tags = [];
+
+        // Structural Flags
+        if (isPalindrome(s)) tags.push({ name: "Palindrome", rare: true });
+        if (isRadar(s)) tags.push({ name: "Radar", rare: true });
+        if (isBookend(s)) tags.push({ name: "3-Digit Bookend", rare: true });
+        if (isBiClass(s)) tags.push({ name: "Bi-Class", rare: true });
+        if (isBinaryCode(s)) tags.push({ name: "Binary Code", rare: true });
+
+        const maxOfAKind = countOccurrences(s);
+        if (maxOfAKind >= 5) tags.push({ name: `${maxOfAKind} of a Kind`, rare: true });
+
+        const tZeroes = trailingZeroesCount(s);
+        if (tZeroes >= 4) tags.push({ name: `${tZeroes} Zeroes`, rare: true });
+
+        // Math Flags
+        if (isHarshad(n)) tags.push({ name: "Harshad", rare: false });
+        if (isHappy(n)) tags.push({ name: "Happy Block", rare: false });
+        if (isPrime(n)) tags.push({ name: "Prime Mystic", rare: true });
+        if (isFibonacci(n)) tags.push({ name: "Fibonacci Helix", rare: true });
+
+        if (n % 1000 === 0) tags.push({ name: "Millennium", rare: true });
+        else if (n % 100 === 0) tags.push({ name: "Century Block", rare: true });
+
+        // Parity Base
+        tags.push({ name: n % 2 === 0 ? "Even" : "Odd", rare: false });
+
+        if (tags.filter(t => t.rare).length === 0 && tags.length <= 2) {
+            tags.unshift({ name: "Standard", rare: false });
+        }
+
+        return tags;
+    }
+
+    // --- STEEM API INTERACTION LAYERS ---
+
+    // 1. Fetch full block data via core JSON-RPC route
+    async function fetchBlockData(blockNum) {
+        try {
+            const response = await fetch('https://api.steemit.com', {
+                method: 'POST',
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'condenser_api.get_block',
+                    params: [blockNum],
+                    id: 1
+                }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            return data.result;
+        } catch (e) {
+            console.error(`Failed to gather block context for #${blockNum}:`, e);
+            return null;
+        }
+    }
+
+    // 2. Aggregate operations inside a block to calculate Dominance
+    async function evaluateDominance(targetUser, blockNum, personalAmount, assetSymbol) {
+        const block = await fetchBlockData(blockNum);
+        if (!block || !block.transactions) return { isHighest: false, note: "API Error" };
+
+        const burnMap = {};
+
+        block.transactions.forEach(tx => {
+            tx.operations.forEach(([opName, opData]) => {
+                if (opName === 'transfer' && opData.to === 'null') {
+                    const runner = opData.from;
+                    const [amountStr, symbol] = opData.amount.split(' ');
+                    
+                    if (symbol === assetSymbol) {
+                        const tokens = parseFloat(amountStr);
+                        burnMap[runner] = (burnMap[runner] || 0) + tokens;
+                    }
+                }
+            });
+        });
+
+        let isHighest = true;
+        let runningMax = personalAmount;
+        let kingAccount = targetUser;
+
+        for (const [account, total] of Object.entries(burnMap)) {
+            if (total > runningMax) {
+                runningMax = total;
+                kingAccount = account;
+                isHighest = false;
+            }
+        }
+
+        return {
+            isHighest: isHighest,
+            kingAccount: kingAccount,
+            maxBurn: runningMax,
+            competitorsCount: Object.keys(burnMap).length
+        };
+    }
+
+    // --- PIPELINE EXECUTION ENGINE ---
+    async function startArcheologyScan() {
+        const userField = document.getElementById('username');
+        const scanBtn = document.getElementById('scanBtn');
+        const statusDiv = document.getElementById('status');
+        const dashboard = document.getElementById('dashboard');
+
+        const account = userField.value.trim().toLowerCase();
+        if (!account) {
+            alert("Please input a valid account username.");
+            return;
+        }
+
+        // Reset display
+        dashboard.innerHTML = '';
+        scanBtn.disabled = true;
+        userField.disabled = true;
+
+        statusDiv.innerText = "Querying account history arrays...";
+
+        try {
+            // Fetch transfer history array via Steem Data Service (SDS) endpoint frameworks
+            const sdsUrl = `https://sds1.steemworld.org/accounts_api/get_transfer_history/${account}/from/0/desc`;
+            const res = await fetch(sdsUrl);
+            const data = await res.json();
+
+            if (!data.result || !data.result.rows) {
+                statusDiv.innerText = "No transfers found or bad server response.";
+                scanBtn.disabled = false;
+                userField.disabled = false;
+                return;
+            }
+
+            // SDS Transfer Columns: time, block, trx_id, type, from, to, amount, memo
+            const transactions = data.result.rows;
+            let burnsFound = 0;
+
+            for (let i = 0; i < transactions.length; i++) {
+                const tx = transactions[i];
+                const blockNum = tx[1];
+                const recipient = tx[5];
+                const rawAmount = tx[6]; // Format string "1.000 STEEM" or "0.500 SBD"
+
+                if (recipient === 'null') {
+                    burnsFound++;
+                    statusDiv.innerText = `Analyzing burn #${burnsFound} (Block #${blockNum})...`;
+
+                    const [amountStr, symbol] = rawAmount.split(' ');
+                    const parsedAmount = parseFloat(amountStr);
+
+                    // Compute archeology parameters
+                    const matrixTags = runArcheologyMatrix(blockNum);
+
+                    // Cross-examine block dominance matrices
+                    const dominance = await evaluateDominance(account, blockNum, parsedAmount, symbol);
+
+                    // Generate UI element card
+                    createArcheologyCard(blockNum, rawAmount, matrixTags, dominance);
+
+                    // Injected throttle padding to respect RPC rate limits during heavy loops
+                    await sleep(75); 
+                }
+            }
+
+            statusDiv.innerText = `Scan Complete! Found ${burnsFound} burn operations.`;
+
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "An execution error halted the scan pipeline.";
+        } finally {
+            scanBtn.disabled = false;
+            userField.disabled = false;
+        }
+    }
+
+    function createArcheologyCard(blockNum, amount, tags, dominance) {
+        const dashboard = document.getElementById('dashboard');
+        
+        const card = document.createElement('div');
+        card.className = `block-card ${dominance.isHighest ? 'king' : ''}`;
+
+        // Build header with conditional crown tag allocation
+        let headerHTML = `<div class="card-header"><span class="block-num">#${blockNum}</span>`;
+        if (dominance.isHighest) {
+            headerHTML += `<span class="crown-badge">👑 Burn King</span>`;
+        }
+        headerHTML += `</div>`;
+
+        // Burn statement details
+        const detailsHTML = `<div class="burn-info">Burned <strong>${amount}</strong></div>`;
+
+        // Leaderboard analysis text strings
+        let leaderboardHTML = '';
+        if (dominance.competitorsCount > 1) {
+            if (dominance.isHighest) {
+                leaderboardHTML = `<div class="leaderboard-details">Dominated block over ${dominance.competitorsCount - 1} other burner(s).</div>`;
+            } else {
+                leaderboardHTML = `<div class="leaderboard-details">King: <strong>${dominance.kingAccount}</strong> (${dominance.maxBurn.toFixed(3)})</div>`;
+            }
+        } else {
+            leaderboardHTML = `<div class="leaderboard-details">Solo burner in this block.</div>`;
+        }
+
+        // Build tagging blocks
+        let tagsHTML = `<div class="tags-container">`;
+        tags.forEach(t => {
+            tagsHTML += `<span class="tag ${t.rare ? 'rare' : ''}">${t.name}</span>`;
+        });
+        tagsHTML += `</div>`;
+
+        card.innerHTML = headerHTML + detailsHTML + leaderboardHTML + tagsHTML;
+        dashboard.appendChild(card);
+    }
+</script>
+
+</body>
+</html>
