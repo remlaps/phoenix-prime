@@ -23,6 +23,10 @@ The engine analyzes each block number against structural patterns, recreational 
 *   **8 of a Kind:** A block where a single digit appears exactly 8 times.
 *   **9 of a Kind:** A block where a single digit appears exactly 9 times.
 *   **10 of a Kind:** A block where a single digit appears exactly 10 times.
+*   **Straight:** A block containing 5 consecutive ascending digits (e.g., `12345`, `34567`).
+*   **Straight Ext:** A block containing 6-10 consecutive ascending digits.
+*   **Full House:** A block with 3 of one digit and 2 of another (e.g., `33344`, `55522`).
+*   **Full House Ext:** An extended full house with 4+3, 5+4, or 6+5 of two distinct digits.
 *   **4 Zeroes:** A block ending in exactly 4 consecutive zeroes (e.g., `8420000`).
 *   **5 Zeroes:** A block ending in exactly 5 consecutive zeroes.
 *   **6 Zeroes:** A block ending in exactly 6 consecutive zeroes.
