@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steem Block Archeologist</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            
+            /* Badge & Stat Border Colors */
+            --color-prime: #818cf8; --bg-prime: #1e1b4b; --border-prime: #4338ca;
+            --color-fib: #34d399; --bg-fib: #064e3b; --border-fib: #047857;
+            --color-mile: #fb923c; --bg-mile: #7c2d12; --border-mile: #9a3412;
+            --color-bin: #4ade80; --bg-bin: #14532d; --border-bin: #15803d;
+            --color-even: #a7f3d0; --bg-even: #065f46; --border-even: #047857;
+            --color-odd: #fbcfe8; --bg-odd: #831843; --border-odd: #9d174d;
+            --color-pal: #f472b6; --bg-pal: #500724; --border-pal: #701a75;
+            --color-harshad: #67e8f9; --bg-harshad: #164e63; --border-harshad: #0e7490;
+            --color-biclass: #c084fc; --bg-biclass: #3b0764; --border-biclass: #581c87;
+            --color-straight: #fde047; --bg-straight: #713f12; --border-straight: #a16207;
+            --color-fhouse: #fda4af; --bg-fhouse: #4c0519; --border-fhouse: #9f1239;
+            --color-radar: #38bdf8; --bg-radar: #0c4a6e; --border-radar: #0369a1;
+            --color-happy: --color-fib; --bg-happy: #14532d; --border-happy: #166534;
+            --color-bookend: #93c5fd; --bg-bookend: #1e3a8a; --border-bookend: #1d4ed8;
+            --color-std: #cbd5e1; --bg-std: #334155; --border-std: #475569;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        h1 { margin-bottom: 0.5rem; color: #f1f5f9; }
+        p { color: var(--text-muted); margin-top: 0; }
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+            font-size: 1rem;
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            background-color: var(--accent);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { background-color: #2563eb; }
+        button:disabled { background-color: #475569; cursor: not-allowed; }
+        
+        /* Summary Dashboard Styles */
+        .summary-dashboard {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+        .summary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #374151;
+            padding-bottom: 0.5rem;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.75rem;
+        }
+        .summary-stat {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stat-val { font-size: 1.25rem; font-weight: 700; }
+        
+        /* Label Colors applied to Stat Cards */
+        .lbl-total { color: #f8fafc; } .lbl-prime { color: var(--color-prime); }
+        .lbl-fib { color: var(--color-fib); } .lbl-mile { color: var(--color-mile); }
+        .lbl-bin { color: var(--color-bin); } .lbl-even { color: var(--color-even); }
+        .lbl-odd { color: var(--color-odd); } .lbl-pal { color: var(--color-pal); }
+        .lbl-harshad { color: var(--color-harshad); } .lbl-biclass { color: var(--color-biclass); }
+        .lbl-straight { color: var(--color-straight); } .lbl-fhouse { color: var(--color-fhouse); }
+        .lbl-radar { color: var(--color-radar); } .lbl-happy { color: var(--color-happy); }
+        .lbl-bookend { color: var(--color-bookend); } .lbl-std { color: var(--color-std); }
+
+        /* Card Layout Styles */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .block-num { font-size: 1.25rem; font-weight: 700; color: #e2e8f0; }
+        .burn-val { font-family: monospace; font-size: 0.95rem; color: #38bdf8; }
+        .badges-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+        .badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-prime { background-color: var(--bg-prime); color: var(--color-prime); border: 1px solid var(--border-prime); }
+        .badge-fib { background-color: var(--bg-fib); color: var(--color-fib); border: 1px solid var(--border-fib); }
+        .badge-milestone { background-color: var(--bg-mile); color: var(--color-mile); border: 1px solid var(--border-mile); }
+        .badge-binary { background-color: var(--bg-bin); color: var(--color-bin); border: 1px solid var(--border-bin); }
+        .badge-even { background-color: var(--bg-even); color: var(--color-even); border: 1px solid var(--border-even); }
+        .badge-odd { background-color: var(--bg-odd); color: var(--color-odd); border: 1px solid var(--border-odd); }
+        .badge-pal { background-color: var(--bg-pal); color: var(--color-pal); border: 1px solid var(--border-pal); }
+        .badge-harshad { background-color: var(--bg-harshad); color: var(--color-harshad); border: 1px solid var(--border-harshad); }
+        .badge-biclass { background-color: var(--bg-biclass); color: var(--color-biclass); border: 1px solid var(--border-biclass); }
+        .badge-straight { background-color: var(--bg-straight); color: var(--color-straight); border: 1px solid var(--border-straight); }
+        .badge-fhouse { background-color: var(--bg-fhouse); color: var(--color-fhouse); border: 1px solid var(--border-fhouse); }
+        .badge-radar { background-color: var(--bg-radar); color: var(--color-radar); border: 1px solid var(--border-radar); }
+        .badge-happy { background-color: var(--bg-happy); color: var(--color-happy); border: 1px solid var(--border-happy); }
+        .badge-bookend { background-color: var(--bg-bookend); color: var(--color-bookend); border: 1px solid var(--border-bookend); }
+        .status { text-align: center; color: var(--text-muted); font-style: italic; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Steem Block Archeologist</h1>
+        <p>Deep-scan full history for @null burns to discover your mathematical block attributes.</p>
+    </header>
+
+    <div class="search-box">
+        <input type="text" id="username" placeholder="Enter Steem username (e.g., remlaps)" value="">
+        <button id="scan-btn" onclick="scanBurnHistory()">Scan Entire History</button>
+    </div>
+
+    <div id="status" class="status"></div>
+    
+    <!-- Summary Dashboard Layout Frame -->
+    <div id="summary-dashboard" class="summary-dashboard">
+        <div class="summary-title">Archeology Metrics Summary</div>
+        <div class="summary-grid">
+            <div class="summary-stat" style="border-color: #4b5563;"><div class="stat-label lbl-total">Total Burned</div><div id="stat-total" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-even);"><div class="stat-label lbl-even">Even</div><div id="stat-even" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-odd);"><div class="stat-label lbl-odd">Odd</div><div id="stat-odd" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal">Palindrome</div><div id="stat-pal" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-harshad);"><div class="stat-label lbl-harshad">Harshad</div><div id="stat-harshad" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-biclass);"><div class="stat-label lbl-biclass">Bi-Class</div><div id="stat-biclass" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-straight);"><div class="stat-label lbl-straight">5-Dig Straight</div><div id="stat-straight" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-fhouse);"><div class="stat-label lbl-fhouse">Full House</div><div id="stat-fhouse" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-radar);"><div class="stat-label lbl-radar">Radar</div><div id="stat-radar" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-happy);"><div class="stat-label lbl-happy">Happy Block</div><div id="stat-happy" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-bookend);"><div class="stat-label lbl-bookend">3-Dig Bookend</div><div id="stat-bookend" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-prime);"><div class="stat-label lbl-prime">Prime Mystic</div><div id="stat-prime" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-fib);"><div class="stat-label lbl-fib">Fibonacci</div><div id="stat-fib" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-mile);"><div class="stat-label lbl-mile">Century</div><div id="stat-mile" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-bin);"><div class="stat-label lbl-bin">Binary</div><div id="stat-bin" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-std);"><div class="stat-label lbl-std">Standard</div><div id="stat-std" class="stat-val">0</div></div>
+        </div>
+    </div>
+
+    <div id="results" class="results-grid"></div>
+</div>
+
+<script>
+    // Traditional Math Checks
+    function isPrime(num) {
+        if (num <= 1) return false;
+        if (num <= 3) return true;
+        if (num % 2 === 0 || num % 3 === 0) return false;
+        for (let i = 5; i * i <= num; i += 6) {
+            if (num % i === 0 || num % (i + 2) === 0) return false;
+        }
+        return true;
+    }
+
+    function isPerfectSquare(x) {
+        let s = parseInt(Math.sqrt(x));
+        return (s * s === x);
+    }
+
+    function isFibonacci(num) {
+        return isPerfectSquare(5 * num * num + 4) || isPerfectSquare(5 * num * num - 4);
+    }
+
+    function isBinary(num) {
+        return /^[01]+$/.test(num.toString());
+    }
+
+    function isMilestone(num) {
+        return num % 100 === 0;
+    }
+
+    // --- NEW SCANNER ARCHEOLOGY CLASSIFICATIONS ---
+    
+    function isPalindrome(str) {
+        return str === str.split('').reverse().join('');
+    }
+
+    function isHarshad(num, str) {
+        let sum = 0;
+        for (let i = 0; i < str.length; i++) {
+            sum += parseInt(str[i]);
+        }
+        return sum > 0 && num % sum === 0;
+    }
+
+    function isBiClass(str) {
+        const uniqueSet = new Set(str.split(''));
+        return uniqueSet.size === 2;
+    }
+
+    function has5DigitStraight(str) {
+        const forward = "0123456789";
+        const backward = "9876543210";
+        for (let i = 0; i <= str.length - 5; i++) {
+            let chunk = str.substring(i, i + 5);
+            if (forward.includes(chunk) || backward.includes(chunk)) return true;
+        }
+        return false;
+    }
+
+    function isFullHouse(str) {
+        const counts = {};
+        for (let char of str) {
+            counts[char] = (counts[char] || 0) + 1;
+        }
+        const values = Object.values(counts);
+        return values.includes(3) && values.includes(2);
+    }
+
+    function isRadar(str) {
+        if (str.length % 2 !== 0) return false;
+        const half = str.length / 2;
+        return str.substring(0, half) === str.substring(half);
+    }
+
+    function isHappyNumber(num) {
+        let seen = new Set();
+        while (num !== 1 && !seen.has(num)) {
+            seen.add(num);
+            let sum = 0;
+            while (num > 0) {
+                let digit = num % 10;
+                sum += digit * digit;
+                num = Math.floor(num / 10);
+            }
+            num = sum;
+        }
+        return num === 1;
+    }
+
+    function is3DigitBookend(str) {
+        if (str.length < 6) return false;
+        return str.substring(0, 3) === str.substring(str.length - 3);
+    }
+
+    async function scanBurnHistory() {
+        const username = document.getElementById('username').value.trim().toLowerCase();
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const dashboard = document.getElementById('summary-dashboard');
+        const btn = document.getElementById('scan-btn');
+        
+        if (!username) {
+            statusDiv.innerText = "Please enter a username.";
+            return;
+        }
+
+        btn.disabled = true;
+        resultsDiv.innerHTML = "";
+        dashboard.style.display = "none";
+        statusDiv.innerText = "Querying SteemWorld SDS Server...";
+
+        let foundBlocks = [];
+        
+        // Comprehensive metrics ledger tracking variables
+        let stats = { 
+            total: 0, even: 0, odd: 0, palindrome: 0, harshad: 0, biclass: 0,
+            straight: 0, fhouse: 0, radar: 0, happy: 0, bookend: 0,
+            prime: 0, fib: 0, milestone: 0, binary: 0, standard: 0 
+        };
+
+        try {
+            const startTime = 1456790400;
+            const endTime = Math.floor(Date.now() / 1000);
+            const url = `https://sds.steemworld.org/account_history_api/getHistoryByOpTypesTime/${username}/transfer/${startTime}-${endTime}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (!data || !data.result || !data.result.rows) {
+                statusDiv.innerText = "No transfer records returned from the SDS query window.";
+                btn.disabled = false;
+                return;
+            }
+
+            const rows = data.result.rows;
+            const cols = data.result.cols;
+            
+            let blockIdx, opIdx;
+            if (Array.isArray(cols)) {
+                blockIdx = cols.indexOf('block');
+                opIdx = cols.indexOf('op');
+            } else if (typeof cols === 'object' && cols !== null) {
+                blockIdx = typeof cols.block !== 'undefined' ? cols.block : Object.keys(cols).indexOf('block');
+                opIdx = typeof cols.op !== 'undefined' ? cols.op : Object.keys(cols).indexOf('op');
+            }
+
+            if (blockIdx === -1 || blockIdx === undefined) blockIdx = 2;
+            if (opIdx === -1 || opIdx === undefined) opIdx = 5;
+
+            statusDiv.innerText = `Filtering ${rows.length} total historical transfers for @null burns...`;
+
+            for (let i = rows.length - 1; i >= 0; i--) {
+                const row = rows[i];
+                const blockNum = row[blockIdx];
+                const op = row[opIdx];
+
+                let targetTo = "";
+                let targetAmount = "";
+                
+                if (op && typeof op === 'object' && !Array.isArray(op)) {
+                    targetTo = op.to;
+                    targetAmount = op.amount;
+                } else if (Array.isArray(op) && op[1]) {
+                    targetTo = op[1].to;
+                    targetAmount = op[1].amount;
+                }
+
+                if (targetTo === 'null') {
+                    foundBlocks.push({
+                        blockNum: blockNum,
+                        burnAmount: targetAmount
+                    });
+                }
+            }
+
+            if (foundBlocks.length === 0) {
+                statusDiv.innerText = "Scan complete. No @null burn operations found in your transfer history.";
+                btn.disabled = false;
+                return;
+            }
+
+            statusDiv.innerText = `Found ${foundBlocks.length} burn actions. Running complete architectural analysis matrix...`;
+
+            // Evaluate geometry elements
+            foundBlocks.forEach(item => {
+                const n = item.blockNum;
+                const s = n.toString();
+                let badgeHTML = '';
+                let hasSpecialTrait = false;
+                
+                stats.total++;
+
+                // Base parity assignment
+                if (n % 2 === 0) { badgeHTML += '<span class="badge badge-even">Even Block</span>'; stats.even++; } 
+                else { badgeHTML += '<span class="badge badge-odd">Odd Block</span>'; stats.odd++; }
+
+                // Structural evaluation pipelines
+                if (isPalindrome(s)) { badgeHTML += '<span class="badge badge-pal">Palindrome</span>'; stats.palindrome++; hasSpecialTrait = true; }
+                if (isHarshad(n, s)) { badgeHTML += '<span class="badge badge-harshad">Harshad</span>'; stats.harshad++; hasSpecialTrait = true; }
+                if (isBiClass(s)) { badgeHTML += '<span class="badge badge-biclass">Bi-Class</span>'; stats.biclass++; hasSpecialTrait = true; }
+                if (has5DigitStraight(s)) { badgeHTML += '<span class="badge badge-straight">5-Dig Straight</span>'; stats.straight++; hasSpecialTrait = true; }
+                if (isFullHouse(s)) { badgeHTML += '<span class="badge badge-fhouse">Full House</span>'; stats.fhouse++; hasSpecialTrait = true; }
+                if (isRadar(s)) { badgeHTML += '<span class="badge badge-radar">Radar</span>'; stats.radar++; hasSpecialTrait = true; }
+                if (isHappyNumber(n)) { badgeHTML += '<span class="badge badge-happy">Happy Block</span>'; stats.happy++; hasSpecialTrait = true; }
+                if (is3DigitBookend(s)) { badgeHTML += '<span class="badge badge-bookend">3-Dig Bookend</span>'; stats.bookend++; hasSpecialTrait = true; }
+                
+                // Classic Math configurations
+                if (isPrime(n)) { badgeHTML += '<span class="badge badge-prime">Prime Mystic</span>'; stats.prime++; hasSpecialTrait = true; }
+                if (isFibonacci(n)) { badgeHTML += '<span class="badge badge-fib">Fibonacci Helix</span>'; stats.fib++; hasSpecialTrait = true; }
+                if (isMilestone(n)) { badgeHTML += '<span class="badge badge-milestone">Century Block</span>'; stats.milestone++; hasSpecialTrait = true; }
+                if (isBinary(n)) { badgeHTML += '<span class="badge badge-binary">Binary Code</span>'; stats.binary++; hasSpecialTrait = true; }
+                
+                if (!hasSpecialTrait) {
+                    stats.standard++;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="block-num">Block #${n.toLocaleString()}</div>
+                    <div class="burn-val">Burned: ${item.burnAmount}</div>
+                    <div class="badges-container">${badgeHTML}</div>
+                `;
+                resultsDiv.appendChild(card);
+            });
+
+            // Update UI matrix values
+            document.getElementById('stat-total').innerText = stats.total.toLocaleString();
+            document.getElementById('stat-even').innerText = stats.even.toLocaleString();
+            document.getElementById('stat-odd').innerText = stats.odd.toLocaleString();
+            document.getElementById('stat-palindrome').innerText = stats.palindrome.toLocaleString();
+            document.getElementById('stat-harshad').innerText = stats.harshad.toLocaleString();
+            document.getElementById('stat-biclass').innerText = stats.biclass.toLocaleString();
+            document.getElementById('stat-straight').innerText = stats.straight.toLocaleString();
+            document.getElementById('stat-fhouse').innerText = stats.fhouse.toLocaleString();
+            document.getElementById('stat-radar').innerText = stats.radar.toLocaleString();
+            document.getElementById('stat-happy').innerText = stats.happy.toLocaleString();
+            document.getElementById('stat-bookend').innerText = stats.bookend.toLocaleString();
+            document.getElementById('stat-prime').innerText = stats.prime.toLocaleString();
+            document.getElementById('stat-fib').innerText = stats.fib.toLocaleString();
+            document.getElementById('stat-mile').innerText = stats.milestone.toLocaleString();
+            document.getElementById('stat-bin').innerText = stats.binary.toLocaleString();
+            document.getElementById('stat-std').innerText = stats.standard.toLocaleString();
+            
+            // Unveil populated metrics container panel
+            dashboard.style.display = "block";
+            statusDiv.innerText = `Report complete! Archeology engine successfully isolated ${foundBlocks.length} collection records.`;
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerText = `Query Error: ${error.message}. Ensure the username is correct and SDS is reachable.`;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
