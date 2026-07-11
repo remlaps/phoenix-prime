@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -193,7 +194,7 @@
             <div class="summary-stat" style="border-color: #4b5563;"><div class="stat-label lbl-total">Total Burned</div><div id="stat-total" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-even);"><div class="stat-label lbl-even">Even</div><div id="stat-even" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-odd);"><div class="stat-label lbl-odd">Odd</div><div id="stat-odd" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal">Palindrome</div><div id="stat-palindrome" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal">Palindrome</div><div id="stat-pal" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-harshad);"><div class="stat-label lbl-harshad">Harshad</div><div id="stat-harshad" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-biclass);"><div class="stat-label lbl-biclass">Bi-Class</div><div id="stat-biclass" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-straight);"><div class="stat-label lbl-straight">5-Dig Straight</div><div id="stat-straight" class="stat-val">0</div></div>
@@ -431,11 +432,11 @@
                 resultsDiv.appendChild(card);
             });
 
-            // Update UI matrix values using the precise element IDs
+            // FIXED DOM UPDATES
             document.getElementById('stat-total').innerText = stats.total.toLocaleString();
             document.getElementById('stat-even').innerText = stats.even.toLocaleString();
             document.getElementById('stat-odd').innerText = stats.odd.toLocaleString();
-            document.getElementById('stat-palindrome').innerText = stats.palindrome.toLocaleString();
+            document.getElementById('stat-pal').innerText = stats.palindrome.toLocaleString();
             document.getElementById('stat-harshad').innerText = stats.harshad.toLocaleString();
             document.getElementById('stat-biclass').innerText = stats.biclass.toLocaleString();
             document.getElementById('stat-straight').innerText = stats.straight.toLocaleString();
