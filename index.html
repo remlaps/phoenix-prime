@@ -25,7 +25,7 @@
             --color-straight: #fde047; --bg-straight: #713f12; --border-straight: #a16207;
             --color-fhouse: #fda4af; --bg-fhouse: #4c0519; --border-fhouse: #9f1239;
             --color-radar: #38bdf8; --bg-radar: #0c4a6e; --border-radar: #0369a1;
-            --color-happy: --color-fib; --bg-happy: #14532d; --border-happy: #166534;
+            --color-happy: #34d399; --bg-happy: #14532d; --border-happy: #166534;
             --color-bookend: #93c5fd; --bg-bookend: #1e3a8a; --border-bookend: #1d4ed8;
             --color-std: #cbd5e1; --bg-std: #334155; --border-std: #475569;
         }
@@ -193,7 +193,7 @@
             <div class="summary-stat" style="border-color: #4b5563;"><div class="stat-label lbl-total">Total Burned</div><div id="stat-total" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-even);"><div class="stat-label lbl-even">Even</div><div id="stat-even" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-odd);"><div class="stat-label lbl-odd">Odd</div><div id="stat-odd" class="stat-val">0</div></div>
-            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal">Palindrome</div><div id="stat-pal" class="stat-val">0</div></div>
+            <div class="summary-stat" style="border-color: var(--border-pal);"><div class="stat-label lbl-pal">Palindrome</div><div id="stat-palindrome" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-harshad);"><div class="stat-label lbl-harshad">Harshad</div><div id="stat-harshad" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-biclass);"><div class="stat-label lbl-biclass">Bi-Class</div><div id="stat-biclass" class="stat-val">0</div></div>
             <div class="summary-stat" style="border-color: var(--border-straight);"><div class="stat-label lbl-straight">5-Dig Straight</div><div id="stat-straight" class="stat-val">0</div></div>
@@ -241,8 +241,7 @@
         return num % 100 === 0;
     }
 
-    // --- NEW SCANNER ARCHEOLOGY CLASSIFICATIONS ---
-    
+    // --- ARCHEOLOGY CLASSIFICATIONS ---
     function isPalindrome(str) {
         return str === str.split('').reverse().join('');
     }
@@ -324,7 +323,6 @@
 
         let foundBlocks = [];
         
-        // Comprehensive metrics ledger tracking variables
         let stats = { 
             total: 0, even: 0, odd: 0, palindrome: 0, harshad: 0, biclass: 0,
             straight: 0, fhouse: 0, radar: 0, happy: 0, bookend: 0,
@@ -394,7 +392,6 @@
 
             statusDiv.innerText = `Found ${foundBlocks.length} burn actions. Running complete architectural analysis matrix...`;
 
-            // Evaluate geometry elements
             foundBlocks.forEach(item => {
                 const n = item.blockNum;
                 const s = n.toString();
@@ -403,11 +400,9 @@
                 
                 stats.total++;
 
-                // Base parity assignment
                 if (n % 2 === 0) { badgeHTML += '<span class="badge badge-even">Even Block</span>'; stats.even++; } 
                 else { badgeHTML += '<span class="badge badge-odd">Odd Block</span>'; stats.odd++; }
 
-                // Structural evaluation pipelines
                 if (isPalindrome(s)) { badgeHTML += '<span class="badge badge-pal">Palindrome</span>'; stats.palindrome++; hasSpecialTrait = true; }
                 if (isHarshad(n, s)) { badgeHTML += '<span class="badge badge-harshad">Harshad</span>'; stats.harshad++; hasSpecialTrait = true; }
                 if (isBiClass(s)) { badgeHTML += '<span class="badge badge-biclass">Bi-Class</span>'; stats.biclass++; hasSpecialTrait = true; }
@@ -417,7 +412,6 @@
                 if (isHappyNumber(n)) { badgeHTML += '<span class="badge badge-happy">Happy Block</span>'; stats.happy++; hasSpecialTrait = true; }
                 if (is3DigitBookend(s)) { badgeHTML += '<span class="badge badge-bookend">3-Dig Bookend</span>'; stats.bookend++; hasSpecialTrait = true; }
                 
-                // Classic Math configurations
                 if (isPrime(n)) { badgeHTML += '<span class="badge badge-prime">Prime Mystic</span>'; stats.prime++; hasSpecialTrait = true; }
                 if (isFibonacci(n)) { badgeHTML += '<span class="badge badge-fib">Fibonacci Helix</span>'; stats.fib++; hasSpecialTrait = true; }
                 if (isMilestone(n)) { badgeHTML += '<span class="badge badge-milestone">Century Block</span>'; stats.milestone++; hasSpecialTrait = true; }
@@ -437,7 +431,7 @@
                 resultsDiv.appendChild(card);
             });
 
-            // Update UI matrix values
+            // Update UI matrix values using the precise element IDs
             document.getElementById('stat-total').innerText = stats.total.toLocaleString();
             document.getElementById('stat-even').innerText = stats.even.toLocaleString();
             document.getElementById('stat-odd').innerText = stats.odd.toLocaleString();
@@ -455,7 +449,6 @@
             document.getElementById('stat-bin').innerText = stats.binary.toLocaleString();
             document.getElementById('stat-std').innerText = stats.standard.toLocaleString();
             
-            // Unveil populated metrics container panel
             dashboard.style.display = "block";
             statusDiv.innerText = `Report complete! Archeology engine successfully isolated ${foundBlocks.length} collection records.`;
 
