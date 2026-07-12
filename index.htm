@@ -245,23 +245,38 @@
             const deltaSec = targetTs - prevTs;
             estimate = prevBlock + Math.max(1, Math.round(deltaSec / 3));
         } else {
+            // Use genesis block (block 0 at 2016-03-24T16:05:00 UTC) as anchor
             estimate = Math.floor((targetTs - STEEM_GENESIS_TS) / 3) + 1;
             if (estimate < 1) estimate = 1;
         }
-        // Binary search in a ±2000 window around the estimate
-        let lo = Math.max(1, estimate - 2000);
-        let hi = estimate + 2000;
-        let best = estimate;
+        // Check the estimate to determine search direction
+        const estTs = await getBlockTimestamp(estimate);
+        if (estTs === null) return estimate;
+        let lo, hi;
+        if (estTs < targetTs) {
+            // Estimate is too low, search forward
+            lo = estimate;
+            // Upper bound: if no missed blocks, the max block for this timestamp
+            // Add a generous 20% buffer for missed blocks
+            const maxBlocks = Math.floor((targetTs - STEEM_GENESIS_TS) / 3) + 1;
+            hi = Math.max(estimate + 1, Math.ceil(maxBlocks * 1.2));
+        } else {
+            // Estimate is too high, search backward
+            hi = estimate;
+            // Lower bound: at minimum, block 1
+            lo = 1;
+        }
+        // Binary search for the first block whose timestamp >= targetTs
+        let best = hi;
         while (lo <= hi) {
             const mid = Math.floor((lo + hi) / 2);
             const blockTs = await getBlockTimestamp(mid);
-            if (blockTs === null) { hi = mid - 1; continue; }
+            if (blockTs === null) { lo = mid + 1; continue; }
             if (blockTs < targetTs) {
                 lo = mid + 1;
-                best = lo;
             } else {
-                hi = mid - 1;
                 best = mid;
+                hi = mid - 1;
             }
         }
         return best;
