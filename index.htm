@@ -220,52 +220,49 @@
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
     function resolveColIdx(cols,name,fallback){if(Array.isArray(cols)){const idx=cols.indexOf(name);return idx===-1?fallback:idx}else if(cols&&typeof cols==='object'){if(typeof cols[name]!=='undefined')return cols[name];const idx=Object.keys(cols).indexOf(name);return idx===-1?fallback:idx}return fallback}
 
+    async function getBlockNumberByTime(timestamp){
+        try{
+            const url=`https://sds0.steemworld.org/chain_api/getBlockInfoByTime/${timestamp}`;
+            const resp=await fetch(url);
+            const data=await resp.json();
+            if(data&&data.result&&data.result.block_num)return data.result.block_num + 1;
+        }catch(e){console.error('Block lookup error:',e)}
+        return null;
+    }
     async function fetchAllUserBurns(username, statusDiv){
-        const limit = 10000;
-        let offset = 0;
-        const found = [];
-        const fromTime = 0;
-        const toTime = 999999999999;
-        while (true) {
-            statusDiv.innerText = `Loading @null burns from account history (${found.length.toLocaleString()} found)...`;
-            const url = `https://sds.steemworld.org/account_history_api/getHistoryByOpTypesTime/${username}/transfer/${fromTime}-${toTime}/${limit}/${offset}`;
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (!data || !data.result || !Array.isArray(data.result.rows)) break;
-            const rows = data.result.rows;
-            const cols = data.result.cols;
-            const blockIdx = resolveColIdx(cols, 'block_num', 2);
-            const timeIdx = resolveColIdx(cols, 'time', 1);
-            const opIdx = resolveColIdx(cols, 'op', 6);
-            for (const row of rows) {
-                const blockNum = row[blockIdx];
-                const timestamp = row[timeIdx];
-                const op = row[opIdx];
-                if (!blockNum || !op || !Array.isArray(op) || op.length < 2) continue;
-                const opType = op[0];
-                const opData = op[1];
-                if (opType !== 'transfer' || !opData) continue;
-                const to = (typeof opData.to === 'string') ? opData.to : '';
-                if (to.toLowerCase() !== 'null') continue;
-                const amountRaw = opData.amount;
-                if (amountRaw === null || amountRaw === undefined) continue;
-                let amount, unit;
-                if (typeof amountRaw === 'string') {
-                    const parts = amountRaw.split(' ');
-                    amount = parseFloat(parts[0]) || 0;
-                    unit = parts.slice(1).join(' ') || 'STEEM';
-                } else {
-                    amount = parseFloat(amountRaw) || 0;
-                    unit = 'STEEM';
-                }
-                if (amount <= 0) continue;
-                found.push({ blockNum, burnAmount: `${amount} ${unit}`, timestamp });
+        const limit=1000;let offset=0;const found=[];
+        while(true){
+            statusDiv.innerText=`Loading @null burns from transfer history (${found.length.toLocaleString()} found)...`;
+            const url=`https://sds.steemworld.org/transfers_api/getTransfersByTypeFromTo/transfer/${username}/null/time/DESC/${limit}/${offset}`;
+            const resp=await fetch(url);const data=await resp.json();
+            if(!data||!data.result||!Array.isArray(data.result.rows))break;
+            const rows=data.result.rows;const cols=data.result.cols;
+            const timeIdx=resolveColIdx(cols,'time',0);const amountIdx=resolveColIdx(cols,'amount',3);const unitIdx=resolveColIdx(cols,'unit',4);
+            for(const row of rows){
+                const timestamp=row[timeIdx];
+                const amountRaw=row[amountIdx];
+                const unit=row[unitIdx];
+                if(timestamp===null||timestamp===undefined)continue;
+                let amount=parseFloat(amountRaw)||0;
+                if(amount<=0)continue;
+                found.push({timestamp, burnAmount:`${amount} ${unit}`, needsBlockLookup:true});
             }
-            if (rows.length < limit) break;
-            offset += limit;
+            if(rows.length<limit)break;
+            offset+=limit;
             await sleep(80);
         }
-        return found.reverse();
+        statusDiv.innerText=`Found ${found.length} burn(s). Resolving block numbers...`;
+        const uniqueTimestamps=[...new Set(found.map(f=>f.timestamp))];
+        const blockMap={};
+        for(const ts of uniqueTimestamps){
+            const bn=await getBlockNumberByTime(ts);
+            if(bn)blockMap[ts]=bn;
+            await sleep(20);
+        }
+        return found.map(item=>({
+            ...item,
+            blockNum:blockMap[item.timestamp]||null
+        })).reverse();
     }
 
     async function fetchAllNullBurns(fromTime,toTime,statusDiv){
