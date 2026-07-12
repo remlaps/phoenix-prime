@@ -238,35 +238,9 @@
         return null;
     }
 
-    async function findBlockForTimestamp(targetTs, prevBlock, prevTs) {
-        // Estimate block number
-        let estimate;
-        if (prevBlock !== undefined && prevTs !== undefined) {
-            const deltaSec = targetTs - prevTs;
-            estimate = prevBlock + Math.max(1, Math.round(deltaSec / 3));
-        } else {
-            // Use genesis block (block 0 at 2016-03-24T16:05:00 UTC) as anchor
-            estimate = Math.floor((targetTs - STEEM_GENESIS_TS) / 3) + 1;
-            if (estimate < 1) estimate = 1;
-        }
-        // Check the estimate to determine search direction
-        const estTs = await getBlockTimestamp(estimate);
-        if (estTs === null) return estimate;
-        let lo, hi;
-        if (estTs < targetTs) {
-            // Estimate is too low, search forward
-            lo = estimate;
-            // Upper bound: if no missed blocks, the max block for this timestamp
-            // Add a generous 20% buffer for missed blocks
-            const maxBlocks = Math.floor((targetTs - STEEM_GENESIS_TS) / 3) + 1;
-            hi = Math.max(estimate + 1, Math.ceil(maxBlocks * 1.2));
-        } else {
-            // Estimate is too high, search backward
-            hi = estimate;
-            // Lower bound: at minimum, block 1
-            lo = 1;
-        }
+    async function binarySearchBlock(targetTs, lo, hi) {
         // Binary search for the first block whose timestamp >= targetTs
+        // lo and hi are inclusive bounds
         let best = hi;
         while (lo <= hi) {
             const mid = Math.floor((lo + hi) / 2);
@@ -285,21 +259,116 @@
     async function resolveBlockNumbers(foundBlocks, statusDiv) {
         if (foundBlocks.length === 0) return;
         statusDiv.innerText = `Resolving block numbers for ${foundBlocks.length} burn timestamps...`;
-        // Work with timestamps in ascending order
+        // Work with timestamps in ascending order, deduplicate
         const sorted = [...foundBlocks].sort((a, b) => a.timestamp - b.timestamp);
-        let prevBlock, prevTs;
-        for (let i = 0; i < sorted.length; i++) {
-            const item = sorted[i];
-            if (i % 20 === 0) {
-                statusDiv.innerText = `Resolving block numbers... ${i}/${sorted.length}`;
+        const unique = [];
+        for (const item of sorted) {
+            if (unique.length === 0 || item.timestamp !== unique[unique.length - 1].timestamp) {
+                unique.push(item);
             }
-            // Skip duplicate timestamps
-            if (item.blockNum === undefined) {
-                const blockNum = await findBlockForTimestamp(item.timestamp, prevBlock, prevTs);
-                item.blockNum = blockNum;
-                prevBlock = blockNum;
-                prevTs = item.timestamp;
+        }
+        const n = unique.length;
+        if (n === 0) return;
+
+        // Step 1: Pick anchors every 100 timestamps
+        const ANCHOR_INTERVAL = 100;
+        const anchors = [];
+        for (let i = 0; i < n; i += ANCHOR_INTERVAL) {
+            anchors.push(i);
+        }
+        // Always include the last index as an anchor
+        if (anchors[anchors.length - 1] !== n - 1) anchors.push(n - 1);
+
+        statusDiv.innerText = `Resolving block numbers: searching ${anchors.length} anchor points...`;
+
+        // Step 2: Binary search for each anchor
+        for (let ai = 0; ai < anchors.length; ai++) {
+            const idx = anchors[ai];
+            const item = unique[idx];
+            let lo, hi;
+            if (ai === 0) {
+                // First anchor: estimate from genesis
+                const estimate = Math.max(1, Math.floor((item.timestamp - STEEM_GENESIS_TS) / 3) + 1);
+                const estTs = await getBlockTimestamp(estimate);
+                if (estTs === null) {
+                    lo = 1;
+                    hi = estimate + 1000000;
+                } else if (estTs < item.timestamp) {
+                    lo = estimate;
+                    const maxBlocks = Math.floor((item.timestamp - STEEM_GENESIS_TS) / 3) + 1;
+                    hi = Math.max(estimate + 1, Math.ceil(maxBlocks * 1.2));
+                } else {
+                    hi = estimate;
+                    lo = 1;
+                }
+            } else {
+                // Use previous anchor as lower bound
+                const prevIdx = anchors[ai - 1];
+                const prevItem = unique[prevIdx];
+                lo = prevItem.blockNum;
+                // Estimate upper bound from time delta
+                const deltaSec = item.timestamp - prevItem.timestamp;
+                const deltaBlocks = Math.max(1, Math.round(deltaSec / 3));
+                hi = lo + Math.ceil(deltaBlocks * 1.2);
+            }
+            item.blockNum = await binarySearchBlock(item.timestamp, lo, hi);
+            statusDiv.innerText = `Resolving block numbers: anchor ${ai + 1}/${anchors.length} (block ${item.blockNum.toLocaleString()})...`;
+            await sleep(30);
+        }
+
+        // Step 3: Fill in gaps between anchors using linear interpolation
+        for (let ai = 0; ai < anchors.length - 1; ai++) {
+            const leftIdx = anchors[ai];
+            const rightIdx = anchors[ai + 1];
+            const leftItem = unique[leftIdx];
+            const rightItem = unique[rightIdx];
+            const gapSize = rightIdx - leftIdx;
+            if (gapSize <= 1) continue;
+
+            statusDiv.innerText = `Resolving block numbers: filling gap ${ai + 1}/${anchors.length - 1} (${gapSize - 1} timestamps)...`;
+
+            for (let gi = leftIdx + 1; gi < rightIdx; gi++) {
+                const item = unique[gi];
+                // Linear interpolation between the two anchors
+                const ratio = (item.timestamp - leftItem.timestamp) / (rightItem.timestamp - leftItem.timestamp);
+                const estimate = leftItem.blockNum + Math.round(ratio * (rightItem.blockNum - leftItem.blockNum));
+                // Check the estimate
+                const estTs = await getBlockTimestamp(estimate);
+                if (estTs === null) {
+                    item.blockNum = estimate;
+                } else if (estTs === item.timestamp) {
+                    item.blockNum = estimate;
+                } else if (estTs < item.timestamp) {
+                    // Walk forward a few blocks
+                    let b = estimate + 1;
+                    while (b <= rightItem.blockNum) {
+                        const ts = await getBlockTimestamp(b);
+                        if (ts === null) { item.blockNum = b; break; }
+                        if (ts >= item.timestamp) { item.blockNum = b; break; }
+                        b++;
+                    }
+                    if (item.blockNum === undefined) item.blockNum = rightItem.blockNum;
+                } else {
+                    // Walk backward a few blocks
+                    let b = estimate - 1;
+                    while (b >= leftItem.blockNum) {
+                        const ts = await getBlockTimestamp(b);
+                        if (ts === null) { item.blockNum = b + 1; break; }
+                        if (ts < item.timestamp) { item.blockNum = b + 1; break; }
+                        b--;
+                    }
+                    if (item.blockNum === undefined) item.blockNum = leftItem.blockNum;
+                }
                 await sleep(30);
+            }
+        }
+
+        // Step 4: Copy block numbers to duplicate timestamps
+        for (const item of foundBlocks) {
+            if (item.blockNum === undefined) {
+                // Find the matching unique entry
+                const match = unique.find(u => u.timestamp === item.timestamp);
+                if (match) item.blockNum = match.blockNum;
             }
         }
     }
