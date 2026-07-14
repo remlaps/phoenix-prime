@@ -542,10 +542,11 @@
         const username=document.getElementById('username').value.trim().toLowerCase();
         const statusDiv=document.getElementById('status');const resultsDiv=document.getElementById('results');const dashboard=document.getElementById('summary-dashboard');const btn=document.getElementById('scan-btn');
         const filterBar=document.getElementById('filter-bar');
-        if(!username){statusDiv.innerText="Please enter a username.";return}
+            if(!username){statusDiv.innerText="Please enter a username.";return}
         btn.disabled=true;resultsDiv.innerHTML="";dashboard.style.display="none";statusDiv.innerText=selectedTimeRangeDays>0?`Querying SDS for burns in the last ${selectedTimeRangeDays} day(s)...`:"Querying SDS for full burn history...";
         const progressContainerReset=document.getElementById('progress-container');const progressBarFillReset=document.getElementById('progress-bar-fill');
         if(progressContainerReset)progressContainerReset.style.display='none';if(progressBarFillReset)progressBarFillReset.style.width='0%';
+        document.querySelectorAll('.summary-stat').forEach(stat => stat.classList.remove('hidden-zero'));
         let stats={total:0,even:0,odd:0,palindrome:0,harshad:0,biclass:0,radar:0,happy:0,bookend:0,mill:0,zeroes4:0,zeroes5:0,zeroes6:0,zeroes7:0,zeroes8:0,kind5:0,kind6:0,kind7:0,kind8:0,kind9:0,bookend4:0,mirror3:0,mirror4:0,straight:0,straightExt:0,unstraight5:0,unstraightExt:0,fullhouse:0,fullhouseExt:0,prime:0,twin:0,fib:0,milestone:0,binary:0,standard:0,king:0};
         try{
             const foundBlocks=await fetchAllUserBurns(username,statusDiv,selectedTimeRangeDays);
@@ -592,6 +593,14 @@
             });
 
             document.getElementById('stat-total').innerText=stats.total.toLocaleString();document.getElementById('stat-even').innerText=stats.even.toLocaleString();document.getElementById('stat-odd').innerText=stats.odd.toLocaleString();document.getElementById('stat-pal').innerText=stats.palindrome.toLocaleString();document.getElementById('stat-harshad').innerText=stats.harshad.toLocaleString();document.getElementById('stat-biclass').innerText=stats.biclass.toLocaleString();document.getElementById('stat-radar').innerText=stats.radar.toLocaleString();document.getElementById('stat-happy').innerText=stats.happy.toLocaleString();document.getElementById('stat-bookend').innerText=stats.bookend.toLocaleString();document.getElementById('stat-mill').innerText=stats.mill.toLocaleString();document.getElementById('stat-zeroes4').innerText=stats.zeroes4.toLocaleString();document.getElementById('stat-zeroes5').innerText=stats.zeroes5.toLocaleString();document.getElementById('stat-zeroes6').innerText=stats.zeroes6.toLocaleString();document.getElementById('stat-zeroes7').innerText=stats.zeroes7.toLocaleString();document.getElementById('stat-zeroes8').innerText=stats.zeroes8.toLocaleString();document.getElementById('stat-kind5').innerText=stats.kind5.toLocaleString();document.getElementById('stat-kind6').innerText=stats.kind6.toLocaleString();document.getElementById('stat-kind7').innerText=stats.kind7.toLocaleString();document.getElementById('stat-kind8').innerText=stats.kind8.toLocaleString();document.getElementById('stat-kind9').innerText=stats.kind9.toLocaleString();document.getElementById('stat-bookend4').innerText=stats.bookend4.toLocaleString();document.getElementById('stat-mirror3').innerText=stats.mirror3.toLocaleString();document.getElementById('stat-mirror4').innerText=stats.mirror4.toLocaleString();document.getElementById('stat-straight').innerText=stats.straight.toLocaleString();document.getElementById('stat-straight-ext').innerText=stats.straightExt.toLocaleString();document.getElementById('stat-unstraight5').innerText=stats.unstraight5.toLocaleString();document.getElementById('stat-unstraight-ext').innerText=stats.unstraightExt.toLocaleString();document.getElementById('stat-fullhouse').innerText=stats.fullhouse.toLocaleString();document.getElementById('stat-fullhouse-ext').innerText=stats.fullhouseExt.toLocaleString();document.getElementById('stat-prime').innerText=stats.prime.toLocaleString();document.getElementById('stat-twin').innerText=stats.twin.toLocaleString();document.getElementById('stat-fib').innerText=stats.fib.toLocaleString();document.getElementById('stat-mile').innerText=stats.milestone.toLocaleString();document.getElementById('stat-bin').innerText=stats.binary.toLocaleString();document.getElementById('stat-std').innerText=stats.standard.toLocaleString();document.getElementById('stat-king').innerText=stats.king.toLocaleString();
+            if (hideZeroEntries) {
+                document.querySelectorAll('.summary-stat').forEach(stat => {
+                    const valDiv = stat.querySelector('.stat-val');
+                    if (valDiv && parseInt(valDiv.innerText.replace(/,/g, '')) === 0) {
+                        stat.classList.add('hidden-zero');
+                    }
+                });
+            }
             document.getElementById('summary-account').innerText='@' + username;
             document.getElementById('summary-range').innerText=selectedTimeRangeDays>0?`Last ${selectedTimeRangeDays} day(s)`:'All Time';
             dashboard.style.display="block";
