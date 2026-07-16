@@ -318,6 +318,24 @@
     function isExtendedFullHouse(str){const counts={};for(let char of str){counts[char]=(counts[char]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=4&&b>=3)return true;if(a>=5&&b>=4)return true}return false}
     function isFullHouse54(str){const counts={};for(let char of str){counts[char]=(counts[char]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=5&&b>=4)return true;if(a>=6&&b>=5)return true}return false}
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    // Run an async worker over items with a bounded number of concurrent tasks.
+    async function runPool(items, concurrency, worker, onProgress){
+        let idx=0;
+        const results=new Array(items.length);
+        async function runner(){
+            while(true){
+                const i=idx++;
+                if(i>=items.length)return;
+                results[i]=await worker(items[i], i);
+                if(onProgress) onProgress(i, results[i]);
+            }
+        }
+        const n=Math.max(1,Math.min(concurrency, items.length));
+        const runners=[];
+        for(let k=0;k<n;k++) runners.push(runner());
+        await Promise.all(runners);
+        return results;
+    }
     function formatBlockTime(ts){
         if(ts===null||typeof ts==='undefined')return 'Unknown';
         const raw=String(ts).trim();
@@ -343,7 +361,7 @@
             const url=`https://sds0.steemworld.org/chain_api/getBlockInfoByTime/${timestamp}`;
             const resp=await fetch(url);
             const data=await resp.json();
-            if(data&&data.result&&data.result.block_num)return data.result.block_num + 1;
+            if(data&&data.result&&typeof data.result.block_num==='number')return data.result.block_num;
         }catch(e){console.error('Block lookup error:',e)}
         return null;
     }
@@ -361,18 +379,28 @@
         return isNaN(d.getTime()) ? null : Math.floor(d.getTime() / 1000);
     }
 
-    async function fetchAllUserBurns(username, statusDiv, days){
-        const limit=1000;let offset=0;const found=[];
+    // Concurrent, rate-respecting settings for the Steemworld block calls.
+    const BLOCKS_CONCURRENCY=6;      // max simultaneous in-flight requests
+    const BLOCKS_REQ_SPACING_MS=105;  // minimum gap enforced between request dispatches
+
+    async function fetchUserBurnKings(username, statusDiv, days){
+        const limit=1000;let offset=0;
         const cutoff = days > 0 ? Math.floor(Date.now() / 1000) - days * 86400 : 0;
-        let stoppedEarly = false;
+        const progressContainer=document.getElementById('progress-container');
+        const progressBarFill=document.getElementById('progress-bar-fill');
+        if(progressContainer)progressContainer.style.display='block';
+        if(progressBarFill)progressBarFill.style.width='0%';
+
+        // ---- Phase 1: gather all of the user's @null burns (paginated, sequential is fine/cheap) ----
+        const burns=[];
+        let cutoffReached=false;
         while(true){
-            statusDiv.innerText=`Loading @null burns from transfer history (${found.length.toLocaleString()} found)...`;
+            statusDiv.innerText=`Collecting @null burns (${burns.length.toLocaleString()} found)...`;
             const url=`https://sds.steemworld.org/transfers_api/getTransfersByTypeFromTo/transfer/${username}/null/time/DESC/${limit}/${offset}`;
             const resp=await fetch(url);const data=await resp.json();
             if(!data||!data.result||!Array.isArray(data.result.rows))break;
             const rows=data.result.rows;const cols=data.result.cols;
             const timeIdx=resolveColIdx(cols,'time',0);const amountIdx=resolveColIdx(cols,'amount',3);const unitIdx=resolveColIdx(cols,'unit',4);
-            let allInRange = true;
             for(const row of rows){
                 const timestamp=row[timeIdx];
                 const amountRaw=row[amountIdx];
@@ -380,74 +408,106 @@
                 if(timestamp===null||timestamp===undefined)continue;
                 let amount=parseFloat(amountRaw)||0;
                 if(amount<=0)continue;
-                if (days > 0) {
-                    const t = resolveTimestampSeconds(timestamp);
-                    if (t !== null && t < cutoff) {
-                        allInRange = false;
-                        break;
-                    }
+                if(days>0){
+                    const t=resolveTimestampSeconds(timestamp);
+                    if(t!==null&&t<cutoff){cutoffReached=true;break;}
                 }
-                found.push({timestamp, burnAmount:`${amount} ${unit}`, needsBlockLookup:true});
+                burns.push({timestamp,amount,unit});
+                if(progressBarFill){
+                    const overallPct=Math.min(40, Math.round((burns.length / Math.max(1, limit)) * 40));
+                    progressBarFill.style.width=overallPct+'%';
+                }
             }
-            if (!allInRange || rows.length < limit) {
-                if (!allInRange) stoppedEarly = true;
-                break;
-            }
+            if(cutoffReached)break;
+            if(rows.length<limit)break;
             offset+=limit;
-            await sleep(80);
+            await sleep(40);
         }
-        if (stoppedEarly) {
-            statusDiv.innerText=`Found ${found.length} burn(s) in selected time range. Resolving block numbers...`;
-        }
-        statusDiv.innerText=`Found ${found.length} burn(s). Resolving block numbers...`;
-        const uniqueTimestamps=[...new Set(found.map(f=>f.timestamp))];
-        const blockMap={};
-        const progressContainer=document.getElementById('progress-container');
-        const progressBarFill=document.getElementById('progress-bar-fill');
-        const totalTs=uniqueTimestamps.length;
-        if(progressContainer)progressContainer.style.display='block';
-        if(progressBarFill)progressBarFill.style.width='0%';
-        let resolvedCount=0;
-        for(const ts of uniqueTimestamps){
-            const bn=await getBlockNumberByTime(ts);
-            if(bn)blockMap[ts]=bn;
-            resolvedCount++;
-            const pct=totalTs>0?Math.round((resolvedCount/totalTs)*100):100;
-            statusDiv.innerText=`Resolving block numbers... (${resolvedCount.toLocaleString()}/${totalTs.toLocaleString()})`;
-            if(progressBarFill)progressBarFill.style.width=pct+'%';
-            await sleep(20);
-        }
-        if(progressContainer)progressContainer.style.display='none';
-        return found.map(item=>({
-            ...item,
-            blockNum:blockMap[item.timestamp]||null
-        })).reverse();
-    }
 
-    async function fetchAllNullBurns(fromTime,toTime,statusDiv){
-        const limit=1000;let offset=0;const burnsByKey={};
-        while(true){
-            const query={type:"transfer",to:"null",fromTime,toTime};
-            const url=`https://sds.steemworld.org/transfers_api/getTransfers/${encodeURIComponent(JSON.stringify(query))}/${limit}/${offset}`;
-            statusDiv.innerText=`Pre-loading global @null burn ledger (${offset.toLocaleString()} records so far)...`;
-            const response=await fetch(url);const data=await response.json();
-            if(!data||!data.result||!Array.isArray(data.result.rows))break;
-            const rows=data.result.rows;const cols=data.result.cols;
-            const timeIdx=resolveColIdx(cols,'time',0);const fromIdx=resolveColIdx(cols,'from',1);const amountIdx=resolveColIdx(cols,'amount',3);const unitIdx=resolveColIdx(cols,'unit',4);
-            rows.forEach(row=>{const key=`${row[timeIdx]}|${row[unitIdx]}`;if(!burnsByKey[key])burnsByKey[key]=[];burnsByKey[key].push({from:row[fromIdx],amount:parseFloat(row[amountIdx])||0})});
-            if(rows.length<limit)break;offset+=limit;
+        if(burns.length===0){
+            if(progressBarFill)progressBarFill.style.width='100%';
+            if(progressContainer)setTimeout(()=>{progressContainer.style.display='none';},400);
+            return [];
         }
-        return burnsByKey;
-    }
 
-    function lookupDominance(burnsByKey,account,personalAmount,symbol,timestamp){
-        if(typeof timestamp==='undefined'||timestamp===null)return null;
-        const key=`${timestamp}|${symbol}`;const rows=burnsByKey[key]||[];const burnMap={};
-        rows.forEach(({from,amount})=>{burnMap[from]=(burnMap[from]||0)+amount});
-        if(!(account in burnMap))burnMap[account]=personalAmount;
-        let isHighest=true;let kingAccount=account;let maxBurn=burnMap[account];
-        for(const [who,total] of Object.entries(burnMap)){if(total>maxBurn){maxBurn=total;kingAccount=who;isHighest=false}}
-        return{isHighest,kingAccount,maxBurn,competitorsCount:Object.keys(burnMap).length};
+        // Process each burn end-to-end in a single parallel pass:
+        // resolve block -> fetch block transactions -> evaluate dominance.
+        const seenTs=new Set();
+        const uniqueBurns=[];
+        for(const b of burns){
+            if(seenTs.has(b.timestamp))continue;
+            seenTs.add(b.timestamp);
+            uniqueBurns.push(b);
+        }
+        statusDiv.innerText=`Resolving & scanning blocks (${uniqueBurns.length.toLocaleString()} burn(s))...`;
+        let lastDispatch=0;
+        let done=0;
+        const kingBlocks=[];
+        await runPool(uniqueBurns, BLOCKS_CONCURRENCY, async (b)=>{
+            const now=Date.now();
+            const wait=Math.max(0, BLOCKS_REQ_SPACING_MS-(now-lastDispatch));
+            if(wait>0)await sleep(wait);
+            lastDispatch=Date.now();
+            const raw=await getBlockNumberByTime(b.timestamp);
+            if(raw===null)return null;
+            const blockNum=raw+1; // step 2
+            let txs=[];
+            try{
+                const bnWait=Math.max(0, BLOCKS_REQ_SPACING_MS-(now-lastDispatch));
+                if(bnWait>0)await sleep(bnWait);
+                lastDispatch=Date.now();
+                const blockResp=await fetch(`https://sds.steemworld.org/blocks_api/getTransactionsInBlock/${blockNum}`);
+                const blockData=await blockResp.json();
+                txs=(blockData&&blockData.result)?blockData.result:[];
+            }catch(e){console.error('Block fetch error:',e);return null;}
+            // 4. Check dominance per asset.
+            const burnMap={};
+            for(const tx of txs){
+                if(!tx.operations||!Array.isArray(tx.operations))continue;
+                for(const op of tx.operations){
+                    if(op[0]!=='transfer')continue;
+                    const td=op[1];
+                    if(td.to!=='null')continue;
+                    const parts=String(td.amount).split(' ');
+                    const amt=parseFloat(parts[0])||0;const sym=parts[1];
+                    const key=`${td.from}|${sym}`;
+                    burnMap[key]=(burnMap[key]||0)+amt;
+                }
+            }
+            const userKey=`${username}|${b.unit}`;
+            const userTotal=(burnMap[userKey]!==undefined)?burnMap[userKey]:b.amount;
+            let isHighest=true;let kingAccount=username;let maxBurn=userTotal;
+            for(const [key,total] of Object.entries(burnMap)){
+                const sym=key.split('|')[1];
+                if(sym!==b.unit)continue;
+                if(total>maxBurn){maxBurn=total;kingAccount=key.split('|')[0];isHighest=false;}
+            }
+            if(isHighest){
+                const competitors=Object.keys(burnMap).filter(k=>k.split('|')[1]===b.unit).length;
+                // 5. Use original timestamp + 3s instead of block expiration.
+                const adjustedTimestamp=(typeof b.timestamp==='number'?b.timestamp:parseInt(b.timestamp)) + 3;
+                return {
+                    item:{timestamp:adjustedTimestamp,burnAmount:`${b.amount} ${b.unit}`,blockNum},
+                    dominance:{isHighest,kingAccount,maxBurn,competitorsCount:competitors},
+                    username
+                };
+            }
+            return null;
+        }, async (i,res)=>{
+            done++;
+            if(progressBarFill){
+                const pct=Math.min(95, Math.round((done/uniqueBurns.length)*95));
+                progressBarFill.style.width=pct+'%';
+            }
+            if(res){
+                kingBlocks.push(res);
+                statusDiv.innerText=`Resolving & scanning blocks (${done}/${uniqueBurns.length}, ${kingBlocks.length.toLocaleString()} king(s) so far)...`;
+            }
+        });
+        statusDiv.innerText=`Found ${kingBlocks.length.toLocaleString()} burn-king block(s).`;
+        if(progressBarFill)progressBarFill.style.width='100%';
+        if(progressContainer)setTimeout(()=>{progressContainer.style.display='none';},400);
+        return kingBlocks;
     }
 
     // ---------- Time Range Selection (before scan) ----------
@@ -568,16 +628,9 @@
         const summaryStats=document.querySelectorAll('.summary-stat');if(summaryStats.length>0)summaryStats.forEach(stat => stat.classList.remove('hidden-zero'));
         let stats={total:0,even:0,odd:0,palindrome:0,harshad:0,biclass:0,radar:0,happy:0,bookend:0,mill:0,zeroes4:0,zeroes5:0,zeroes6:0,zeroes7:0,zeroes8:0,kind5:0,kind6:0,kind7:0,kind8:0,kind9:0,bookend4:0,mirror3:0,mirror4:0,straight:0,straight6:0,straight7:0,straight8:0,straight9:0,unstraight5:0,unstraight6:0,unstraight7:0,unstraight8:0,unstraight9:0,fullhouse:0,fullhouseExt:0,fullhouse54:0,prime:0,twin:0,fib:0,milestone:0,binary:0,standard:0,king:0};
         try{
-            const foundBlocks=await fetchAllUserBurns(username,statusDiv,selectedTimeRangeDays);
-            if(foundBlocks.length===0){if(statusDiv)statusDiv.innerText="Scan complete. No @null burn operations found.";btn.disabled=false;return}
-            if(statusDiv)statusDiv.innerText=`Found ${foundBlocks.length} burn actions. Preloading global burn ledger to check king status...`;
-            const validTimestamps=foundBlocks.map(b=>b.timestamp).filter(t=>typeof t!=='undefined'&&t!==null);
-            let burnsByKey={};if(validTimestamps.length>0){const ledgerFrom=Math.min(...validTimestamps);const ledgerTo=Math.max(...validTimestamps);burnsByKey=await fetchAllNullBurns(ledgerFrom,ledgerTo,statusDiv)}
-            if(statusDiv)statusDiv.innerText=`Ledger preloaded. Checking burn-king status for ${foundBlocks.length} burns...`;
-            const dominanceResults=foundBlocks.map(item=>{const amountStrParts=String(item.burnAmount).split(' ');if(amountStrParts.length!==2)return null;const[amountStr,symbol]=amountStrParts;const parsedAmount=parseFloat(amountStr)||0;return lookupDominance(burnsByKey,username,parsedAmount,symbol,item.timestamp)});
-            const kingBlocks=[];for(let i=0;i<foundBlocks.length;i++){const dominance=dominanceResults[i];if(dominance&&dominance.isHighest){kingBlocks.push({item:foundBlocks[i],dominance,username})}}
-            if(kingBlocks.length===0){statusDiv.innerText=`Scan complete. Found ${foundBlocks.length} burn(s), but none were burn-king for their block.`;btn.disabled=false;return}
-            statusDiv.innerText=`Confirmed ${kingBlocks.length} burn-king block(s) out of ${foundBlocks.length} total burns. Running architectural analysis matrix...`;
+            const kingBlocks=await fetchUserBurnKings(username,statusDiv,selectedTimeRangeDays);
+            if(kingBlocks.length===0){if(statusDiv)statusDiv.innerText="Scan complete. No @null burn operations found where you were the BurnMaxxer.";btn.disabled=false;return}
+            statusDiv.innerText=`Confirmed ${kingBlocks.length} burn-king block(s). Running architectural analysis matrix...`;
 
             allCardsData = kingBlocks.map(entry => ({
                 ...entry.item,
@@ -633,7 +686,7 @@
                 btn.classList.toggle('active', parseInt(btn.dataset.days) === selectedTimeRangeDays);
             });
             applyFilter(selectedTimeRangeDays);
-            statusDiv.innerText=`Report complete! Phoenix Prime engine successfully isolated ${foundBlocks.length} collection records.`;
+            statusDiv.innerText=`Report complete! Phoenix Prime engine successfully isolated ${kingBlocks.length} collection records.`;
         }catch(error){console.error(error);if(statusDiv)statusDiv.innerText=`Query Error: ${error.message}. Ensure the username is correct and SDS is reachable.`;const pc=document.getElementById('progress-container');if(pc)pc.style.display='none'}finally{if(btn)btn.disabled=false}
     }
 
