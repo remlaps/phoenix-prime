@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Prime – BurnMaxx Leaderboard</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-gold: #f59e0b;
+            --color-prime: #818cf8; --bg-prime: #1e1b4b; --border-prime: #4338ca;
+            --color-fib: #34d399; --bg-fib: #064e3b; --border-fib: #047857;
+            --color-mile: #fb923c; --bg-mile: #7c2d12; --border-mile: #9a3412;
+            --color-bin: #4ade80; --bg-bin: #14532d; --border-bin: #15803d;
+            --color-even: #a7f3d0; --bg-even: #065f46; --border-even: #047857;
+            --color-odd: #fbcfe8; --bg-odd: #831843; --border-odd: #9d174d;
+            --color-pal: #f472b6; --bg-pal: #500724; --border-pal: #701a75;
+            --color-harshad: #67e8f9; --bg-harshad: #164e63; --border-harshad: #0e7490;
+            --color-biclass: #c084fc; --bg-biclass: #3b0764; --border-biclass: #581c87;
+            --color-radar: #38bdf8; --bg-radar: #0c4a6e; --border-radar: #0369a1;
+            --color-happy: #34d399; --bg-happy: #14532d; --border-happy: #166534;
+            --color-bookend: #93c5fd; --bg-bookend: #1e3a8a; --border-bookend: #1d4ed8;
+            --color-mill: #f43f5e; --bg-mill: #4c0519; --border-mill: #9f1239;
+            --color-zeroes4: #e2e8f0; --bg-zeroes4: #334155; --border-zeroes4: #475569;
+            --color-zeroes5: #e2e8f0; --bg-zeroes5: #334155; --border-zeroes5: #475569;
+            --color-zeroes6: #e2e8f0; --bg-zeroes6: #334155; --border-zeroes6: #475569;
+            --color-zeroes7: #e2e8f0; --bg-zeroes7: #334155; --border-zeroes7: #475569;
+            --color-zeroes8: #e2e8f0; --bg-zeroes8: #334155; --border-zeroes8: #475569;
+            --color-kind5: #a855f7; --bg-kind5: #2e1065; --border-kind5: #6b21a8;
+            --color-kind6: #a855f7; --bg-kind6: #2e1065; --border-kind6: #6b21a8;
+            --color-kind7: #a855f7; --bg-kind7: #2e1065; --border-kind7: #6b21a8;
+            --color-kind8: #a855f7; --bg-kind8: #2e1065; --border-kind8: #6b21a8;
+            --color-kind9: #a855f7; --bg-kind9: #2e1065; --border-kind9: #6b21a8;
+            --color-mirror3: #f97316; --bg-mirror3: #7c2d12; --border-mirror3: #9a3412;
+            --color-mirror4: #f97316; --bg-mirror4: #7c2d12; --border-mirror4: #9a3412;
+            --color-bookend4: #60a5fa; --bg-bookend4: #1e3a8a; --border-bookend4: #1d4ed8;
+            --color-straight: #2dd4bf; --bg-straight: #134e4a; --border-straight: #0f766e;
+            --color-straight-ext: #2dd4bf; --bg-straight-ext: #134e4a; --border-straight-ext: #0f766e;
+            --color-unstraight5: #2dd4bf; --bg-unstraight5: #134e4a; --border-unstraight5: #0f766e;
+            --color-unstraight-ext: #2dd4bf; --bg-unstraight-ext: #134e4a; --border-unstraight-ext: #0f766e;
+            --color-fullhouse: #fbbf24; --bg-fullhouse: #451a03; --border-fullhouse: #78350f;
+            --color-fullhouse-ext: #fbbf24; --bg-fullhouse-ext: #451a03; --border-fullhouse-ext: #78350f;
+            --color-std: #cbd5e1; --bg-std: #334155; --border-std: #475569;
+            --color-twin: #f0abfc; --bg-twin: #4a0e4e; --border-twin: #86198f;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; display: flex; justify-content: center; }
+        .app { max-width: 1300px; width: 100%; padding: 1.5rem 2rem; }
+        header { text-align: center; margin-bottom: 1.5rem; position: relative; }
+        h1 { margin-bottom: 0.3rem; color: #f1f5f9; font-size: 1.6rem; }
+        .subtitle { color: var(--text-muted); margin-top: 0; font-size: 0.9rem; }
+        .nav-bar { display: flex; gap: 2rem; justify-content: center; margin-bottom: 1.2rem; }
+        .nav-bar a { color: var(--accent); text-decoration: none; font-size: 0.9rem; font-weight: 600; padding: 0.3rem 1rem; border-radius: 0.375rem; border: 1px solid var(--accent); transition: all 0.15s; }
+        .nav-bar a:hover { background-color: var(--accent); color: white; }
+        .nav-bar a.active { background-color: var(--accent); color: white; }
+        .nav-bar a:first-child { border-color: #475569; color: var(--text-muted); }
+        .nav-bar a:first-child:hover { background-color: #475569; color: white; }
+
+        /* Time tabs */
+        .time-tabs { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; }
+        .time-tab { padding: 0.5rem 1.2rem; border: 1px solid #475569; background: transparent; color: var(--text-muted); border-radius: 0.375rem; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.15s; }
+        .time-tab:hover { border-color: var(--accent); color: var(--text-main); }
+        .time-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .time-tab:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .status { text-align: center; color: var(--text-muted); font-style: italic; margin-bottom: 0.75rem; font-size: 0.9rem; min-height: 1.5rem; }
+        .progress-container { width: 100%; max-width: 500px; margin: 0 auto 1rem; background-color: var(--card-bg); border: 1px solid #334155; border-radius: 6px; height: 10px; overflow: hidden; display: none; }
+        .progress-bar-fill { height: 100%; width: 0%; background-color: var(--accent); transition: width 0.15s ease-out; }
+        .progress-info { text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+
+        .leaderboard-section { margin-bottom: 2.5rem; }
+        .section-title { font-size: 1.2rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid #374151; display: flex; align-items: center; gap: 0.5rem; }
+        .section-title .badge-count { font-size: 0.7rem; color: var(--text-muted); font-weight: 400; }
+
+        table { width: 100%; border-collapse: collapse; background-color: var(--card-bg); border-radius: 0.75rem; overflow: hidden; border: 1px solid #334155; }
+        th { background-color: #111827; color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid #334155; white-space: nowrap; cursor: pointer; user-select: none; }
+        th:hover { color: #f1f5f9; background-color: #1a2332; }
+        th .sort-arrow { margin-left: 0.25rem; font-size: 0.65rem; opacity: 0.5; }
+        th.sorted-asc .sort-arrow, th.sorted-desc .sort-arrow { opacity: 1; color: var(--accent); }
+        th.sorted-asc .sort-arrow::after { content: '▲'; }
+        th.sorted-desc .sort-arrow::after { content: '▼'; }
+        th:not(.sorted-asc):not(.sorted-desc) .sort-arrow::after { content: '⇅'; }
+        td { padding: 0.55rem 0.75rem; border-bottom: 1px solid #1f2937; font-size: 0.9rem; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background-color: rgba(59, 130, 246, 0.05); }
+        .rank { font-weight: 700; color: var(--text-muted); width: 2.5rem; text-align: center; }
+        .rank-1 { color: var(--accent-gold); }
+        .rank-2 { color: #94a3b8; }
+        .rank-3 { color: #d97706; }
+        .account-cell { font-weight: 600; color: #e2e8f0; }
+        .num-cell { text-align: right; font-family: monospace; font-size: 0.95rem; }
+        .num-highlight { color: #38bdf8; }
+        .num-prime { color: var(--color-prime); }
+        .num-even { color: var(--color-even); }
+        .num-odd { color: var(--color-odd); }
+        .num-pal { color: var(--color-pal); }
+        .num-harshad { color: var(--color-harshad); }
+        .num-biclass { color: var(--color-biclass); }
+        .num-happy { color: var(--color-happy); }
+        .num-twin { color: var(--color-twin); }
+        .num-bin { color: var(--color-bin); }
+        .num-gold { color: var(--accent-gold); }
+        .section-empty { text-align: center; color: var(--text-muted); padding: 2rem; font-style: italic; background: var(--card-bg); border: 1px solid #334155; border-radius: 0.75rem; }
+
+        @media (max-width: 900px) {
+            .app { padding: 1rem; }
+            table { font-size: 0.8rem; }
+            th, td { padding: 0.45rem 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <header>
+        <h1>🏆 BurnMaxx Leaderboard</h1>
+        <p class="subtitle">Top-10 BurnMaxxers by block attribute categories across recent Steem history</p>
+        <div class="nav-bar">
+            <a href="index.html">← Phoenix Prime Scanner</a>
+        </div>
+    </header>
+
+    <!-- Time window tabs -->
+    <div class="time-tabs" id="time-tabs">
+        <button class="time-tab active" data-window="hour">Last Hour</button>
+        <button class="time-tab" data-window="day">Last Day</button>
+        <button class="time-tab" data-window="week">Last 7 Days</button>
+        <button id="refresh-btn" class="time-tab" style="border-color: var(--accent); color: var(--accent); margin-left: 0.5rem;">⟳ Refresh Data</button>
+    </div>
+
+    <div id="status" class="status">Select a time window to begin scanning the blockchain for BurnMaxxers.</div>
+    <div id="progress-container" class="progress-container"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
+    <div id="progress-info" class="progress-info"></div>
+
+    <!-- Section 1: Most BurnMax Blocks -->
+    <div id="section-total" class="leaderboard-section">
+        <div class="section-title">🔥 Most BurnMax Blocks <span class="badge-count">(total blocks where user was the dominant burner)</span></div>
+        <div id="table-total" data-section="total"><div class="section-empty">No data yet. Click a time window above.</div></div>
+    </div>
+
+    <!-- Section 2: Even / Odd -->
+    <div id="section-evenodd" class="leaderboard-section">
+        <div class="section-title">⚖️ Most Even & Odd BurnMax Blocks</div>
+        <div id="table-evenodd" data-section="evenodd"><div class="section-empty">No data yet.</div></div>
+    </div>
+
+    <!-- Section 3: Prime / Twin / Happy / Harshad / Palindrome / BiClass / Binary -->
+    <div id="section-math" class="leaderboard-section">
+        <div class="section-title">🔢 Number Theory Properties <span class="badge-count">(prime, twin prime, happy, harshad, palindrome, bi-class, binary)</span></div>
+        <div id="table-math" data-section="math"><div class="section-empty">No data yet.</div></div>
+    </div>
+
+    <!-- Section 4: Structural Patterns (hierarchical) -->
+    <div id="section-structural" class="leaderboard-section">
+        <div class="section-title">🧱 Structural Patterns <span class="badge-count">(straights, unordered straights, full houses, trailing zeroes, N-of-a-kind, mirrored straights, bookends)</span></div>
+        <div id="table-structural" data-section="structural"><div class="section-empty">No data yet.</div></div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    //  MATHEMATICAL / STRUCTURAL HELPERS (reused from index.html)
+    // ============================================================
+    function isPrime(num){if(num<=1)return false;if(num<=3)return true;if(num%2===0||num%3===0)return false;for(let i=5;i*i<=num;i+=6){if(num%i===0||num%(i+2)===0)return false}return true}
+    function isTwinPrime(num){return isPrime(num)&&(isPrime(num-2)||isPrime(num+2))}
+    function isPerfectSquare(x){let s=parseInt(Math.sqrt(x));return s*s===x}
+    function isFibonacci(num){return isPerfectSquare(5*num*num+4)||isPerfectSquare(5*num*num-4)}
+    function isBinary(num){return /^[01]+$/.test(num.toString())}
+    function isMilestone(num){return num%100===0}
+    function isPalindrome(str){return str===str.split('').reverse().join('')}
+    function isHarshad(num,str){let sum=0;for(let i=0;i<str.length;i++)sum+=parseInt(str[i]);return sum>0&&num%sum===0}
+    function isBiClass(str){return new Set(str.split('')).size===2}
+    function isRadar(str){if(str.length%2!==0)return false;const half=str.length/2;return str.substring(0,half)===str.substring(half)}
+    function isHappyNumber(num){let seen=new Set();while(num!==1&&!seen.has(num)){seen.add(num);let sum=0;while(num>0){let digit=num%10;sum+=digit*digit;num=Math.floor(num/10)}num=sum}return num===1}
+    function is3DigitBookend(str){if(str.length<6)return false;return str.substring(0,3)===str.substring(str.length-3)}
+    function is4DigitBookend(str){if(str.length<8)return false;return str.substring(0,4)===str.substring(str.length-4)}
+    function isAscendingRun(digits){for(let i=1;i<digits.length;i++){if(digits[i]!==digits[i-1]+1)return false}return true}
+    function isDescendingRun(digits){for(let i=1;i<digits.length;i++){if(digits[i]!==digits[i-1]-1)return false}return true}
+    function isMirror3Straight(str){if(str.length<6)return false;for(let start=0;start<=str.length-6;start++){const a=+str[start],b=+str[start+1],c=+str[start+2];if(!(isAscendingRun([a,b,c])||isDescendingRun([a,b,c])))continue;if(+str[start+3]===c&&+str[start+4]===b&&+str[start+5]===a)return true}return false}
+    function isMirror4Straight(str){if(str.length<8)return false;for(let start=0;start<=str.length-8;start++){const a=+str[start],b=+str[start+1],c=+str[start+2],d=+str[start+3];if(!(isAscendingRun([a,b,c,d])||isDescendingRun([a,b,c,d])))continue;if(+str[start+4]===d&&+str[start+5]===c&&+str[start+6]===b&&+str[start+7]===a)return true}return false}
+    function isMillennium(num){return num%1000===0}
+    function countTrailingZeroes(str){const match=str.match(/0+$/);return match?match[0].length:0}
+    function countMaxSameDigit(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}let max=0;for(let c in counts){if(counts[c]>max)max=counts[c]}return max}
+    function longestConsecutiveRun(str){const d=str.split('').map(Number);let best=1;let curA=1;let curD=1;for(let i=1;i<d.length;i++){if(d[i]===d[i-1]+1){curA++;curD=1}else if(d[i]===d[i-1]-1){curD++;curA=1}else{curA=1;curD=1}if(curA>best)best=curA;if(curD>best)best=curD}return best}
+    function hasUnorderedStraight(str,minLen){const unique=[...new Set(str.split('').map(Number))].sort((a,b)=>a-b);if(unique.length<minLen)return false;let best=1;let cur=1;for(let i=1;i<unique.length;i++){if(unique[i]===unique[i-1]+1){cur++;if(cur>best)best=cur}else{cur=1}if(best>=minLen)return true}return best>=minLen}
+    function isFullHouse(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a===3&&b===2)return true}return false}
+    function isExtendedFullHouse(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=4&&b>=3)return true;if(a>=5&&b>=4)return true}return false}
+    function isFullHouse54(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=5&&b>=4)return true;if(a>=6&&b>=5)return true}return false}
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+    // ============================================================
+    //  BLOCK CLASSIFICATION
+    // ============================================================
+    function classifyBlock(blockNum) {
+        const n = blockNum;
+        const s = n.toString();
+        const c = {};
+
+        c.even = n % 2 === 0 ? 1 : 0;
+        c.odd = n % 2 !== 0 ? 1 : 0;
+        c.prime = isPrime(n) ? 1 : 0;
+        c.twinPrime = isTwinPrime(n) ? 1 : 0;
+        c.happy = isHappyNumber(n) ? 1 : 0;
+        c.harshad = isHarshad(n, s) ? 1 : 0;
+        c.palindrome = isPalindrome(s) ? 1 : 0;
+        c.biclass = isBiClass(s) ? 1 : 0;
+        c.binary = isBinary(n) ? 1 : 0;
+
+        const tz = countTrailingZeroes(s);
+        c.century = isMilestone(n) ? 1 : 0;
+        c.millennium = isMillennium(n) ? 1 : 0;
+        c.tz4 = tz >= 4 ? 1 : 0; c.tz5 = tz >= 5 ? 1 : 0; c.tz6 = tz >= 6 ? 1 : 0; c.tz7 = tz >= 7 ? 1 : 0; c.tz8 = tz >= 8 ? 1 : 0;
+
+        const mcd = countMaxSameDigit(s);
+        c.kind5 = mcd >= 5 ? 1 : 0; c.kind6 = mcd >= 6 ? 1 : 0; c.kind7 = mcd >= 7 ? 1 : 0; c.kind8 = mcd >= 8 ? 1 : 0; c.kind9 = mcd >= 9 ? 1 : 0;
+
+        c.bookend3 = is3DigitBookend(s) ? 1 : 0; c.bookend4 = is4DigitBookend(s) ? 1 : 0;
+        c.mirror3 = isMirror3Straight(s) ? 1 : 0; c.mirror4 = isMirror4Straight(s) ? 1 : 0;
+
+        const run = longestConsecutiveRun(s);
+        c.straight5 = run >= 5 ? 1 : 0; c.straight6 = run >= 6 ? 1 : 0; c.straight7 = run >= 7 ? 1 : 0; c.straight8 = run >= 8 ? 1 : 0; c.straight9 = run >= 9 ? 1 : 0;
+
+        c.unstraight5 = hasUnorderedStraight(s, 5) ? 1 : 0; c.unstraight6 = hasUnorderedStraight(s, 6) ? 1 : 0;
+        c.unstraight7 = hasUnorderedStraight(s, 7) ? 1 : 0; c.unstraight8 = hasUnorderedStraight(s, 8) ? 1 : 0; c.unstraight9 = hasUnorderedStraight(s, 9) ? 1 : 0;
+
+        c.fh32 = isFullHouse(s) ? 1 : 0; c.fh43 = isExtendedFullHouse(s) ? 1 : 0; c.fh54 = isFullHouse54(s) ? 1 : 0;
+
+        return c;
+    }
+
+    // ============================================================
+    //  STATE
+    // ============================================================
+    const state = {
+        window: 'hour',
+        scanning: false,
+        cached: { hour: null, day: null, week: null },
+        userData: null,
+        sort: {
+            total: { col: 'total', asc: false },
+            evenodd: { col: 'total', asc: false },
+            math: { col: 'sum', asc: false },
+            structural: { col: 'score', asc: false }
+        }
+    };
+
+    // ============================================================
+    //  API HELPERS
+    // ============================================================
+    async function fetchtCurrentBlockNum() {
+        const resp = await fetch('https://api.steemit.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                jsonrpc: '2.0',
+                method: 'condenser_api.get_dynamic_global_properties',
+                params: [],
+                id: 1
+            })
+        });
+        const data = await resp.json();
+        if (!data || !data.result || !data.result.last_irreversible_block_num) {
+            throw new Error('Failed to fetch current block number');
+        }
+        return data.result.last_irreversible_block_num;
+    }
+
+    async function fetchBurnMaxxersInRange(startBlock, endBlock, onProgress) {
+        const results = [];
+        let lastReportedCount = 0;
+        const BATCH = 200;
+        const totalBatches = Math.ceil((endBlock - startBlock + 1) / BATCH);
+        let batchIdx = 0;
+
+        for (let s = startBlock; s <= endBlock; s += BATCH) {
+            const e = Math.min(s + BATCH - 1, endBlock);
+            batchIdx++;
+            let retries = 3;
+            let success = false;
+
+            while (retries > 0 && !success) {
+                try {
+                    const url = `https://sds.steemworld.org/blocks_api/getTransactionsInBlockRange/${s}-${e}`;
+                    const resp = await fetch(url);
+                    const data = await resp.json();
+
+                    if (data && data.result && Array.isArray(data.result)) {
+                        for (let offset = 0; offset < data.result.length; offset++) {
+                            const blockTxs = data.result[offset];
+                            if (!Array.isArray(blockTxs)) continue;
+                            const blockNum = s + offset;
+                            const classifiers = classifyBlock(blockNum);
+
+                            const burnMap = {};
+                            for (const tx of blockTxs) {
+                                if (!tx.operations || !Array.isArray(tx.operations)) continue;
+                                for (const op of tx.operations) {
+                                    if (op[0] !== 'transfer') continue;
+                                    const td = op[1];
+                                    if (td.to !== 'null') continue;
+                                    const parts = String(td.amount).split(' ');
+                                    const amt = parseFloat(parts[0]) || 0;
+                                    const sym = parts[1];
+                                    if (amt <= 0) continue;
+                                    const key = `${td.from}|${sym}`;
+                                    burnMap[key] = (burnMap[key] || 0) + amt;
+                                }
+                            }
+
+                            if (Object.keys(burnMap).length === 0) continue;
+
+                            const assetGroups = {};
+                            for (const [key, total] of Object.entries(burnMap)) {
+                                const [account, asset] = key.split('|');
+                                if (!assetGroups[asset]) assetGroups[asset] = {};
+                                assetGroups[asset][account] = (assetGroups[asset][account] || 0) + total;
+                            }
+
+                            for (const [asset, accounts] of Object.entries(assetGroups)) {
+                                let maxAmt = 0, maxAccount = '';
+                                for (const [acct, amt] of Object.entries(accounts)) {
+                                    if (amt > maxAmt) { maxAmt = amt; maxAccount = acct; }
+                                }
+                                results.push({ blockNum, classifiers, asset, burnAmount: maxAmt, burner: maxAccount });
+                            }
+                        }
+                    }
+                    success = true;
+                } catch (err) {
+                    retries--;
+                    if (retries > 0) await sleep(500 + Math.random() * 500);
+                    else console.error(`Failed batch ${s}-${e}:`, err);
+                }
+            }
+
+            if (onProgress && results.length !== lastReportedCount) {
+                lastReportedCount = results.length;
+                onProgress(batchIdx, totalBatches, s, e, results.length);
+            }
+            await sleep(105);
+        }
+
+        return results;
+    }
+
+    function aggregateLeaderboard(burnMaxxerResults) {
+        const userData = {};
+        for (const entry of burnMaxxerResults) {
+            const acct = entry.burner;
+            if (!userData[acct]) {
+                userData[acct] = {
+                    total: 0, even: 0, odd: 0,
+                    prime: 0, twinPrime: 0, happy: 0, harshad: 0, palindrome: 0, biclass: 0, binary: 0,
+                    century: 0, millennium: 0,
+                    tz4: 0, tz5: 0, tz6: 0, tz7: 0, tz8: 0,
+                    kind5: 0, kind6: 0, kind7: 0, kind8: 0, kind9: 0,
+                    bookend3: 0, bookend4: 0, mirror3: 0, mirror4: 0,
+                    straight5: 0, straight6: 0, straight7: 0, straight8: 0, straight9: 0,
+                    unstraight5: 0, unstraight6: 0, unstraight7: 0, unstraight8: 0, unstraight9: 0,
+                    fh32: 0, fh43: 0, fh54: 0
+                };
+            }
+            const u = userData[acct];
+            const c = entry.classifiers;
+            u.total++;
+            u.even += c.even; u.odd += c.odd;
+            u.prime += c.prime; u.twinPrime += c.twinPrime; u.happy += c.happy; u.harshad += c.harshad;
+            u.palindrome += c.palindrome; u.biclass += c.biclass; u.binary += c.binary;
+            u.century += c.century; u.millennium += c.millennium;
+            u.tz4 += c.tz4; u.tz5 += c.tz5; u.tz6 += c.tz6; u.tz7 += c.tz7; u.tz8 += c.tz8;
+            u.kind5 += c.kind5; u.kind6 += c.kind6; u.kind7 += c.kind7; u.kind8 += c.kind8; u.kind9 += c.kind9;
+            u.bookend3 += c.bookend3; u.bookend4 += c.bookend4;
+            u.mirror3 += c.mirror3; u.mirror4 += c.mirror4;
+            u.straight5 += c.straight5; u.straight6 += c.straight6; u.straight7 += c.straight7; u.straight8 += c.straight8; u.straight9 += c.straight9;
+            u.unstraight5 += c.unstraight5; u.unstraight6 += c.unstraight6; u.unstraight7 += c.unstraight7; u.unstraight8 += c.unstraight8; u.unstraight9 += c.unstraight9;
+            u.fh32 += c.fh32; u.fh43 += c.fh43; u.fh54 += c.fh54;
+        }
+        return userData;
+    }
+
+    // ============================================================
+    //  SORT / RENDER
+    // ============================================================
+    function structuralScore(data) {
+        const TIER = 1e4;
+        let score = 0;
+        score += data.straight9 * TIER * 9 + data.straight8 * TIER * 8 + data.straight7 * TIER * 7 + data.straight6 * TIER * 6 + data.straight5 * TIER * 5;
+        score += data.unstraight9 * TIER * 4.5 + data.unstraight8 * TIER * 4 + data.unstraight7 * TIER * 3.5 + data.unstraight6 * TIER * 3 + data.unstraight5 * TIER * 2.5;
+        score += data.fh54 * TIER * 2 + data.fh43 * TIER * 1.5 + data.fh32 * TIER;
+        score += data.tz8 * 8000 + data.tz7 * 7000 + data.tz6 * 6000 + data.tz5 * 5000 + data.tz4 * 4000 + data.millennium * 3000 + data.century * 2000;
+        score += data.kind9 * 900 + data.kind8 * 800 + data.kind7 * 700 + data.kind6 * 600 + data.kind5 * 500;
+        score += data.mirror4 * 80 + data.mirror3 * 50;
+        score += data.bookend4 * 20 + data.bookend3 * 10;
+        return score;
+    }
+
+    function composeText(entries, labels) {
+        // entries: array of [key, count] where count > 0, sorted by descending count
+        // labels: object mapping key to display label
+        if (entries.length === 0) return '0';
+        const total = entries.reduce((s, [,c]) => s + c, 0);
+        const details = entries.map(([k, c]) => `${labels[k]}:${c}`).join(', ');
+        return `${total} (${details})`;
+    }
+
+    function getStraightComposition(d) {
+        const items = [];
+        if (d.straight9) items.push(['S9', d.straight9]);
+        if (d.straight8) items.push(['S8', d.straight8]);
+        if (d.straight7) items.push(['S7', d.straight7]);
+        if (d.straight6) items.push(['S6', d.straight6]);
+        if (d.straight5) items.push(['S5', d.straight5]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function getUnstraightComposition(d) {
+        const items = [];
+        if (d.unstraight9) items.push(['uS9', d.unstraight9]);
+        if (d.unstraight8) items.push(['uS8', d.unstraight8]);
+        if (d.unstraight7) items.push(['uS7', d.unstraight7]);
+        if (d.unstraight6) items.push(['uS6', d.unstraight6]);
+        if (d.unstraight5) items.push(['uS5', d.unstraight5]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function getFullHouseComposition(d) {
+        const items = [];
+        if (d.fh54) items.push(['5-4', d.fh54]);
+        if (d.fh43) items.push(['4-3', d.fh43]);
+        if (d.fh32) items.push(['3-2', d.fh32]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function getTZComposition(d) {
+        const items = [];
+        if (d.tz8) items.push(['8+Z', d.tz8]);
+        if (d.tz7) items.push(['7+Z', d.tz7]);
+        if (d.tz6) items.push(['6+Z', d.tz6]);
+        if (d.tz5) items.push(['5+Z', d.tz5]);
+        if (d.tz4) items.push(['4+Z', d.tz4]);
+        if (d.millennium) items.push(['Mil', d.millennium]);
+        if (d.century) items.push(['Cen', d.century]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function getKindComposition(d) {
+        const items = [];
+        if (d.kind9) items.push(['9K', d.kind9]);
+        if (d.kind8) items.push(['8K', d.kind8]);
+        if (d.kind7) items.push(['7K', d.kind7]);
+        if (d.kind6) items.push(['6K', d.kind6]);
+        if (d.kind5) items.push(['5K', d.kind5]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function getMirrorComposition(d) {
+        const items = [];
+        if (d.mirror4) items.push(['M4', d.mirror4]);
+        if (d.mirror3) items.push(['M3', d.mirror3]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function getBookendComposition(d) {
+        const items = [];
+        if (d.bookend4) items.push(['Bk4', d.bookend4]);
+        if (d.bookend3) items.push(['Bk3', d.bookend3]);
+        const total = items.reduce((s, [,c]) => s + c, 0);
+        if (total === 0) return '0';
+        return `${total} (${items.map(([k,c]) => k + ':' + c).join(', ')})`;
+    }
+
+    function sortUserData(sectionId, colKey, asc) {
+        const userData = state.userData;
+        if (!userData) return [];
+        const entries = Object.entries(userData);
+
+        let getVal;
+        if (sectionId === 'total') {
+            getVal = ([,d], k) => k === 'total' ? d.total : 0;
+        } else if (sectionId === 'evenodd') {
+            getVal = ([,d], k) => {
+                if (k === 'total') return d.even + d.odd;
+                if (k === 'even') return d.even;
+                return d.odd;
+            };
+        } else if (sectionId === 'math') {
+            getVal = ([,d], k) => {
+                if (k === 'sum') return d.prime + d.twinPrime + d.happy + d.harshad + d.palindrome + d.biclass + d.binary;
+                return d[k] || 0;
+            };
+        } else if (sectionId === 'structural') {
+            getVal = ([,d], k) => {
+                if (k === 'score') return structuralScore(d);
+                if (k === 'straight') return d.straight5 + d.straight6 + d.straight7 + d.straight8 + d.straight9;
+                if (k === 'unstraight') return d.unstraight5 + d.unstraight6 + d.unstraight7 + d.unstraight8 + d.unstraight9;
+                if (k === 'fh') return d.fh32 + d.fh43 + d.fh54;
+                if (k === 'tz') return d.century + d.millennium + d.tz4 + d.tz5 + d.tz6 + d.tz7 + d.tz8;
+                if (k === 'kn') return d.kind5 + d.kind6 + d.kind7 + d.kind8 + d.kind9;
+                if (k === 'mr') return d.mirror3 + d.mirror4;
+                if (k === 'bk') return d.bookend3 + d.bookend4;
+                return 0;
+            };
+        }
+
+        entries.sort((a, b) => {
+            const va = getVal(a, colKey);
+            const vb = getVal(b, colKey);
+            return asc ? va - vb : vb - va;
+        });
+
+        return entries.slice(0, 10);
+    }
+
+    function renderSection(sectionId) {
+        const userData = state.userData;
+        if (!userData) return;
+        const sortState = state.sort[sectionId];
+        const top10 = sortUserData(sectionId, sortState.col, sortState.asc);
+        const container = document.getElementById(`table-${sectionId}`);
+        if (!top10.length) {
+            container.innerHTML = '<div class="section-empty">No BurnMaxxers found in this time window.</div>';
+            return;
+        }
+
+        let html = '<table><thead><tr>';
+        const h = (label, key, cls) => {
+            const isSorted = sortState.col === key;
+            const dir = isSorted ? (sortState.asc ? 'sorted-asc' : 'sorted-desc') : '';
+            html += `<th class="${dir}" ${cls ? 'style="text-align:right;"' : ''} onclick="onSort('${sectionId}','${key}')">${label}<span class="sort-arrow"></span></th>`;
+        };
+
+        if (sectionId === 'total') {
+            h('Rank', ''); h('Account', ''); h('BurnMax Blocks', 'total');
+            html += '</tr></thead><tbody>';
+            top10.forEach(([acct, data], i) => {
+                const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+                html += `<tr><td class="rank ${rankCls}">#${i + 1}</td><td class="account-cell">@${acct}</td><td class="num-cell num-highlight">${data.total.toLocaleString()}</td></tr>`;
+            });
+        } else if (sectionId === 'evenodd') {
+            h('Rank', ''); h('Account', ''); h('Even', 'even'); h('Odd', 'odd'); h('Total', 'total');
+            html += '</tr></thead><tbody>';
+            top10.forEach(([acct, data], i) => {
+                const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+                html += `<tr><td class="rank ${rankCls}">#${i + 1}</td><td class="account-cell">@${acct}</td><td class="num-cell num-even">${data.even.toLocaleString()}</td><td class="num-cell num-odd">${data.odd.toLocaleString()}</td><td class="num-cell num-highlight">${(data.even + data.odd).toLocaleString()}</td></tr>`;
+            });
+        } else if (sectionId === 'math') {
+            h('Rank', ''); h('Account', ''); h('Prime', 'prime'); h('Twin', 'twinPrime'); h('Happy', 'happy');
+            h('Harshad', 'harshad'); h('Pal', 'palindrome'); h('BiC', 'biclass'); h('Bin', 'binary'); h('Σ', 'sum');
+            html += '</tr></thead><tbody>';
+            top10.forEach(([acct, data], i) => {
+                const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+                const total = data.prime + data.twinPrime + data.happy + data.harshad + data.palindrome + data.biclass + data.binary;
+                html += `<tr><td class="rank ${rankCls}">#${i + 1}</td><td class="account-cell">@${acct}</td>
+                    <td class="num-cell num-prime">${data.prime.toLocaleString()}</td>
+                    <td class="num-cell num-twin">${data.twinPrime.toLocaleString()}</td>
+                    <td class="num-cell num-happy">${data.happy.toLocaleString()}</td>
+                    <td class="num-cell num-harshad">${data.harshad.toLocaleString()}</td>
+                    <td class="num-cell num-pal">${data.palindrome.toLocaleString()}</td>
+                    <td class="num-cell num-biclass">${data.biclass.toLocaleString()}</td>
+                    <td class="num-cell num-bin">${data.binary.toLocaleString()}</td>
+                    <td class="num-cell num-gold">${total.toLocaleString()}</td></tr>`;
+            });
+        } else if (sectionId === 'structural') {
+            h('Rank', ''); h('Account', '');
+            h('Straight', 'straight'); h('Unordered Straight', 'unstraight'); h('Full House', 'fh');
+            h('Trailing Zeroes', 'tz'); h('N-of-a-Kind', 'kn'); h('Mirrored', 'mr'); h('Bookend', 'bk');
+            h('Score', 'score');
+            html += '</tr></thead><tbody>';
+            top10.forEach(([acct, data], i) => {
+                const rankCls = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
+                const s = structuralScore(data);
+                html += `<tr><td class="rank ${rankCls}">#${i + 1}</td><td class="account-cell">@${acct}</td>
+                    <td class="num-cell" title="Straights (S9/S8/S7/S6/S5)">${getStraightComposition(data)}</td>
+                    <td class="num-cell" title="Unordered Straights (uS9/uS8/uS7/uS6/uS5)">${getUnstraightComposition(data)}</td>
+                    <td class="num-cell" title="Full Houses (5-4/4-3/3-2)">${getFullHouseComposition(data)}</td>
+                    <td class="num-cell" title="Trailing Zeroes (8+/7+/6+/5+/4+/Mil/Cen)">${getTZComposition(data)}</td>
+                    <td class="num-cell" title="N-of-a-Kind (9K/8K/7K/6K/5K)">${getKindComposition(data)}</td>
+                    <td class="num-cell" title="Mirrored Straights (M4/M3)">${getMirrorComposition(data)}</td>
+                    <td class="num-cell" title="Bookends (Bk4/Bk3)">${getBookendComposition(data)}</td>
+                    <td class="num-cell num-gold">${s.toLocaleString()}</td></tr>`;
+            });
+        }
+
+        html += '</tbody></table>';
+        if (sectionId === 'structural') {
+            html += `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;padding:0.3rem 0.5rem;">
+                <strong>Legend:</strong> S = Straight, uS = Unordered Straight, FH = Full House,
+                TZ = Trailing Zeroes (incl. Century & Millennium), Kn = N-of-a-Kind, Mr = Mirrored Straight, Bk = Bookend.
+                Click any column header to sort.
+            </div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function renderAll() {
+        ['total', 'evenodd', 'math', 'structural'].forEach(id => renderSection(id));
+    }
+
+    function onSort(sectionId, colKey) {
+        if (!colKey) return;
+        const sortState = state.sort[sectionId];
+        if (sortState.col === colKey) {
+            sortState.asc = !sortState.asc;
+        } else {
+            sortState.col = colKey;
+            sortState.asc = false;
+        }
+        renderSection(sectionId);
+    }
+
+    // ============================================================
+    //  MAIN SCAN
+    // ============================================================
+    async function scanTimeWindow(windowKey) {
+        if (state.scanning) return;
+        if (state.cached[windowKey]) {
+            state.userData = state.cached[windowKey];
+            renderAll();
+            const labels = { hour: 'Last Hour', day: 'Last Day', week: 'Last 7 Days' };
+            document.getElementById('status').innerText = `Showing cached data for ${labels[windowKey]}. Click "Refresh Data" to rescan.`;
+            return;
+        }
+
+        state.scanning = true;
+        const statusDiv = document.getElementById('status');
+        const progressContainer = document.getElementById('progress-container');
+        const progressFill = document.getElementById('progress-bar-fill');
+        const progressInfo = document.getElementById('progress-info');
+
+        document.querySelectorAll('.time-tab').forEach(t => t.disabled = true);
+        progressContainer.style.display = 'block';
+        progressFill.style.width = '0%';
+        progressInfo.innerText = 'Initializing...';
+
+        try {
+            statusDiv.innerText = 'Fetching current block number...';
+            const currentBlock = await fetchtCurrentBlockNum();
+
+            let hours;
+            if (windowKey === 'hour') hours = 1;
+            else if (windowKey === 'day') hours = 24;
+            else hours = 168;
+
+            const blocksBack = Math.round(hours * 3600 / 3);
+            const startBlock = Math.max(1, currentBlock - blocksBack);
+            const endBlock = currentBlock;
+
+            statusDiv.innerText = `Scanning blocks ${startBlock.toLocaleString()} → ${endBlock.toLocaleString()} (${blocksBack.toLocaleString()} blocks, ~${hours}h)...`;
+            progressInfo.innerText = 'Starting batch fetches...';
+
+            const results = await fetchBurnMaxxersInRange(startBlock, endBlock, (batchIdx, totalBatches, s, e, foundCount) => {
+                const pct = Math.round((batchIdx / totalBatches) * 95);
+                progressFill.style.width = pct + '%';
+                progressInfo.innerText = `Batch ${batchIdx}/${totalBatches} (blocks ${s.toLocaleString()}-${e.toLocaleString()})`;
+                statusDiv.innerText = `Scanning... ${batchIdx}/${totalBatches} batches complete. Found ${foundCount} BurnMaxxer entries so far.`;
+            });
+
+            progressFill.style.width = '98%';
+            progressInfo.innerText = 'Aggregating leaderboard data...';
+
+            state.userData = aggregateLeaderboard(results);
+            state.cached[windowKey] = state.userData;
+
+            // Reset sort defaults
+            state.sort = {
+                total: { col: 'total', asc: false },
+                evenodd: { col: 'total', asc: false },
+                math: { col: 'sum', asc: false },
+                structural: { col: 'score', asc: false }
+            };
+
+            progressFill.style.width = '100%';
+            progressInfo.innerText = 'Rendering...';
+            renderAll();
+
+            const uniqueUsers = Object.keys(state.userData).length;
+            const labels = { hour: 'Last Hour', day: 'Last Day', week: 'Last 7 Days' };
+            statusDiv.innerText = `✅ Scan complete! ${results.length} BurnMaxxer entries found across ${uniqueUsers} unique accounts in the ${labels[windowKey]}.`;
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = `❌ Error: ${err.message}. Please try refreshing.`;
+        } finally {
+            progressFill.style.width = '100%';
+            setTimeout(() => { progressContainer.style.display = 'none'; progressInfo.innerText = ''; }, 1000);
+            document.querySelectorAll('.time-tab').forEach(t => t.disabled = false);
+            state.scanning = false;
+        }
+    }
+
+    // ============================================================
+    //  UI EVENT BINDING
+    // ============================================================
+    document.querySelectorAll('.time-tab[data-window]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.time-tab[data-window]').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            state.window = tab.dataset.window;
+            scanTimeWindow(state.window);
+        });
+    });
+
+    document.getElementById('refresh-btn').addEventListener('click', () => {
+        state.cached[state.window] = null;
+        scanTimeWindow(state.window);
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        scanTimeWindow('hour');
+    });
+</script>
+</body>
+</html>

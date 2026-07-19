@@ -174,8 +174,13 @@
     <div class="main-content">
         <div class="container">
             <header>
-                <h1>Phoenix Prime on Steem</h1>
-                <p>Deep-scan full history for @null burns to discover your mathematical block attributes.</p>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+                    <div style="flex:1;text-align:center;">
+                        <h1>Phoenix Prime on Steem</h1>
+                        <p>Deep-scan full history for @null burns to discover your mathematical block attributes.</p>
+                    </div>
+                    <a href="leaderboard.html" style="color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:600;padding:0.35rem 1rem;border-radius:0.375rem;border:1px solid var(--accent);white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='var(--accent)';this.style.color='white';" onmouseout="this.style.background='transparent';this.style.color='var(--accent)';">🏆 Leaderboard</a>
+                </div>
             </header>
             <!-- Time Range Filter Buttons (visible before scan; sets the API query window) -->
             <div class="filter-bar" id="filter-bar">
