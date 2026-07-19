@@ -628,13 +628,7 @@
     // ============================================================
     async function scanTimeWindow(windowKey) {
         if (state.scanning) return;
-        if (state.cached[windowKey]) {
-            state.userData = state.cached[windowKey];
-            renderAll();
-            const labels = { hour: 'Last Hour', day: 'Last Day', week: 'Last 7 Days' };
-            document.getElementById('status').innerText = `Showing cached data for ${labels[windowKey]}. Click "Refresh Data" to rescan.`;
-            return;
-        }
+        const labels = { hour: 'Last Hour', day: 'Last Day', week: 'Last 7 Days' };
 
         state.scanning = true;
         const statusDiv = document.getElementById('status');
