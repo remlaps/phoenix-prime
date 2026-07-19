@@ -190,6 +190,7 @@
             <div class="search-box">
                 <input type="text" id="username" placeholder="Enter Steem username (e.g., remlaps)" value="" onkeydown="if(event.key==='Enter')scanBurnHistory()">
                 <button id="scan-btn" onclick="scanBurnHistory()">Scan History</button>
+                <button id="sort-btn" onclick="toggleSortOrder()" style="background-color: transparent; border: 1px solid #475569; color: var(--text-muted); font-size: 0.85rem; padding: 0.5rem 1rem;" title="Toggle sort order">⬇ Newest First</button>
             </div>
             <div id="status" class="status"></div>
             <div id="progress-container" class="progress-container"><div id="progress-bar-fill" class="progress-bar-fill"></div></div>
@@ -268,6 +269,7 @@
     // Stored data for filtering
     let allCardsData = [];
     let activeFilterDays = 0;
+    let sortAscending = false; // false = newest first, true = oldest first
 
     function toggleZeroEntries() {
         hideZeroEntries = !hideZeroEntries;
@@ -520,9 +522,40 @@
         });
     }
 
-    // ---------- Filtering (post-scan) ----------
-    function applyFilter(days) {
-        activeFilterDays = days;
+    // ---------- Sorting ----------
+    function sortBlocks(blocks, ascending) {
+        return blocks.slice().sort((a, b) => {
+            const tsA = resolveTimestampMs(a.timestamp);
+            const tsB = resolveTimestampMs(b.timestamp);
+            if (tsA === null && tsB === null) return 0;
+            if (tsA === null) return 1;
+            if (tsB === null) return -1;
+            return ascending ? tsA - tsB : tsB - tsA;
+        });
+    }
+
+    function resolveTimestampMs(ts) {
+        if (ts === null || typeof ts === 'undefined') return null;
+        if (typeof ts === 'number') {
+            return ts < 1e12 ? ts * 1000 : ts;
+        }
+        if (typeof ts === 'string' && /^\d+$/.test(ts)) {
+            const num = Number(ts);
+            return num < 1e12 ? num * 1000 : num;
+        }
+        const d = new Date(ts + (ts.endsWith('Z') ? '' : 'Z'));
+        return isNaN(d.getTime()) ? null : d.getTime();
+    }
+
+    function toggleSortOrder() {
+        sortAscending = !sortAscending;
+        const btn = document.getElementById('sort-btn');
+        btn.innerText = sortAscending ? '⬆ Oldest First' : '⬇ Newest First';
+        renderFilteredResults();
+    }
+
+    function renderFilteredResults() {
+        const days = activeFilterDays;
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.days) === days);
         });
@@ -533,28 +566,23 @@
         let filtered = allCardsData;
         if (days > 0) {
             filtered = allCardsData.filter(item => {
-                const ts = item.timestamp;
-                if (!ts) return false;
-                let t;
-                if (typeof ts === 'number') {
-                    t = ts;
-                    // SDS API returns seconds-based timestamps; convert to ms for Date.now() comparison
-                    if (t < 1e12) t *= 1000;
-                } else if (typeof ts === 'string' && /^\d+$/.test(ts)) {
-                    t = Number(ts);
-                    if (t < 1e12) t *= 1000;
-                } else {
-                    t = new Date(ts + (ts.endsWith('Z') ? '' : 'Z')).getTime();
-                }
-                if (isNaN(t)) return false;
+                const t = resolveTimestampMs(item.timestamp);
+                if (t === null) return false;
                 return t >= cutoff;
             });
         }
+        filtered = sortBlocks(filtered, sortAscending);
         filtered.forEach(item => {
             const card = buildCardElement(item);
             resultsDiv.appendChild(card);
         });
         document.getElementById('status').innerText = `Showing ${filtered.length} block(s)${days > 0 ? ` from the last ${days} day(s)` : ' (all time)'}.`;
+    }
+
+    // ---------- Filtering (post-scan) ----------
+    function applyFilter(days) {
+        activeFilterDays = days;
+        renderFilteredResults();
     }
 
     function buildCardElement(item) {
@@ -632,11 +660,11 @@
             if(kingBlocks.length===0){if(statusDiv)statusDiv.innerText="Scan complete. No @null burn operations found where you were the BurnMaxxer.";btn.disabled=false;return}
             statusDiv.innerText=`Confirmed ${kingBlocks.length} burn-king block(s). Running architectural analysis matrix...`;
 
-            allCardsData = kingBlocks.map(entry => ({
+            allCardsData = sortBlocks(kingBlocks.map(entry => ({
                 ...entry.item,
                 username: entry.username,
                 dominance: entry.dominance
-            }));
+            })), sortAscending);
 
             kingBlocks.forEach(({item})=>{
                 const n=item.blockNum;const s=n.toString();let hasSpecialTrait=false;stats.total++;stats.king++;
