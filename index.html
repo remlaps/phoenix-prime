@@ -446,11 +446,17 @@
             seenTs.add(b.timestamp);
             uniqueBurns.push(b);
         }
-        statusDiv.innerText=`Resolving & scanning blocks (${uniqueBurns.length.toLocaleString()} burn(s))...`;
+        
+        // Pre-filter to only burns within the time window
+        const windowBurns = days > 0 
+            ? uniqueBurns.filter(b => { const t = resolveTimestampSeconds(b.timestamp); return t === null || t >= cutoff; })
+            : uniqueBurns;
+            
+        statusDiv.innerText=`Resolving & scanning blocks (${windowBurns.length.toLocaleString()} burn(s) in window)...`;
         let lastDispatch=0;
         let done=0;
         const kingBlocks=[];
-        await runPool(uniqueBurns, BLOCKS_CONCURRENCY, async (b)=>{
+        await runPool(windowBurns, BLOCKS_CONCURRENCY, async (b)=>{
             const now=Date.now();
             const wait=Math.max(0, BLOCKS_REQ_SPACING_MS-(now-lastDispatch));
             if(wait>0)await sleep(wait);
@@ -503,12 +509,12 @@
         }, async (i,res)=>{
             done++;
             if(progressBarFill){
-                const pct=Math.min(95, Math.round((done/uniqueBurns.length)*95));
+                const pct=Math.min(95, Math.round((done/windowBurns.length)*95));
                 progressBarFill.style.width=pct+'%';
             }
             if(res){
                 kingBlocks.push(res);
-                statusDiv.innerText=`Resolving & scanning blocks (${done}/${uniqueBurns.length}, ${kingBlocks.length.toLocaleString()} king(s) so far)...`;
+                statusDiv.innerText=`Resolving & scanning blocks (${done}/${windowBurns.length}, ${kingBlocks.length.toLocaleString()} king(s) so far)...`;
             }
         });
         statusDiv.innerText=`Found ${kingBlocks.length.toLocaleString()} burn-king block(s).`;
