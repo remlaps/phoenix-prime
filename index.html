@@ -167,6 +167,33 @@
             .app-layout { flex-direction: column; }
             .sidebar { width: 100%; position: static; max-height: none; }
         }
+        /* ============ VAAS (Visibility as a Service) Styles ============ */
+        .vaas-section { background-color: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+        .vaas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+        .vaas-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
+        .vaas-title .small { font-size: 0.7rem; font-weight: 400; color: var(--text-muted); }
+        .vaas-status { font-size: 0.75rem; color: var(--text-muted); }
+        .vaas-holder { border-radius: 0.5rem; padding: 1rem; min-height: 120px; display: flex; flex-direction: column; gap: 0.5rem; border: 2px solid #334155; background-color: var(--card-bg); position: relative; overflow: hidden; }
+        .vaas-holder.hidden { display: none; }
+        .vaas-heading { font-size: 0.95rem; font-weight: 700; color: #f8fafc; }
+        .vaas-scroll-wrap { overflow: hidden; white-space: nowrap; position: relative; }
+        .vaas-scroll-text { display: inline-block; white-space: nowrap; padding-left: 100%; animation: vaas-scroll 20s linear infinite; }
+        .vaas-scroll-text.paused { animation-play-state: paused; }
+        @keyframes vaas-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        .vaas-details { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--text-muted); }
+        .vaas-details span { white-space: nowrap; }
+        .vaas-details strong { color: var(--text-main); font-weight: 600; }
+        .vaas-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; font-weight: 600; }
+        .vaas-link:hover { text-decoration: underline; }
+        .vaas-suggest-btn { align-self: flex-start; padding: 0.4rem 1rem; font-size: 0.8rem; background-color: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 0.375rem; cursor: pointer; font-weight: 600; }
+        .vaas-suggest-btn:hover { background-color: var(--accent); color: white; }
+        .vaas-suggest-btn.hidden { display: none; }
+        .vaas-vote-table { margin-top: 0.75rem; width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .vaas-vote-table th, .vaas-vote-table td { padding: 0.35rem 0.5rem; border: 1px solid #334155; text-align: center; }
+        .vaas-vote-table th { background-color: #1e293b; color: var(--text-muted); font-weight: 700; }
+        .vaas-vote-table td { color: var(--text-main); }
+        .vaas-vote-table.hidden { display: none; }
+        .vaas-empty { color: var(--text-muted); font-style: italic; font-size: 0.85rem; text-align: center; padding: 1rem 0; }
     </style>
 </head>
 <body>
@@ -182,6 +209,33 @@
                     <a href="leaderboard.html" style="color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:600;padding:0.35rem 1rem;border-radius:0.375rem;border:1px solid var(--accent);white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.background='var(--accent)';this.style.color='white';" onmouseout="this.style.background='transparent';this.style.color='var(--accent)';">🏆 Leaderboard</a>
                 </div>
             </header>
+            <!-- ============ VAAS (Visibility as a Service) Section ============ -->
+            <div class="vaas-section" id="vaas-section">
+                <div class="vaas-header">
+                    <div class="vaas-title">📡 Visibility as a Service <span class="small">(rotating @null burn & promo content)</span></div>
+                    <div class="vaas-status" id="vaas-status">Initializing...</div>
+                </div>
+                <!-- Beneficiary post holder (type 0) -->
+                <div class="vaas-holder hidden" id="vaas-ben-holder">
+                    <div class="vaas-heading" id="vaas-ben-heading"></div>
+                    <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-ben-scroll"></span></div>
+                    <div class="vaas-details" id="vaas-ben-details"></div>
+                    <a class="vaas-link" id="vaas-ben-link" href="#" target="_blank" rel="noopener noreferrer">View on Steem →</a>
+                    <button class="vaas-suggest-btn hidden" id="vaas-suggest-btn" onclick="toggleVoteTable()">💡 Suggest Vote</button>
+                    <table class="vaas-vote-table hidden" id="vaas-vote-table">
+                        <thead><tr><th>Votes/Day</th><th>Suggested %</th></tr></thead>
+                        <tbody id="vaas-vote-body"></tbody>
+                    </table>
+                </div>
+                <!-- Promo memo holder (types 1 & 2) -->
+                <div class="vaas-holder hidden" id="vaas-promo-holder">
+                    <div class="vaas-heading" id="vaas-promo-heading"></div>
+                    <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-promo-scroll"></span></div>
+                    <div class="vaas-details" id="vaas-promo-details"></div>
+                    <a class="vaas-link" id="vaas-promo-link" href="#" target="_blank" rel="noopener noreferrer">Open →</a>
+                </div>
+                <div class="vaas-empty hidden" id="vaas-empty">No VAAS content available yet — waiting for @null beneficiary posts or promo transfers...</div>
+            </div>
             <!-- Time Range Filter Buttons (visible before scan; sets the API query window) -->
             <div class="filter-bar" id="filter-bar">
                 <button class="filter-btn active" data-days="0" onclick="setTimeRange(0)">All Time</button>
@@ -834,7 +888,647 @@
         }
     }
 
-    window.addEventListener('DOMContentLoaded', loadUpcomingBlocks);
+    // ============================================================
+    //  VAAS (Visibility as a Service) — Selection & Display Logic
+    //  Implements VAAS_SELECTION_LOGIC.md
+    // ============================================================
+    const VAAS_CONFIG = {
+        VAAS_INTERVAL: 30,          // blocks between content refresh
+        HALFLIFE_BLOCKS: 1200,      // weight halves this often (~1 hour)
+        MAXLIFE_BLOCKS: 28800,      // item expiry (~1 day)
+        MINREP: 45.0,
+        MIN_FOLLOWERS: 20,
+        MIN_MED_FOLLOWER_REP: 35.0,
+        NODE_URL: 'https://api.steemit.com',
+        URL_LEFT: 'https://steemit.com'
+    };
+
+    // In-memory pools
+    let vaasPostPool = [];   // Pool A — null-beneficiary posts
+    let vaasMemoPool = [];   // Pool B — promo/vanity transfers
+    let vaasChangePost = true;
+    let vaasLastBlockChecked = 0;
+    let vaasSteemPerSbd = 7.5;  // fallback; updated from feed history
+    let vaasCurrentBlock = 0;
+    let vaasPolling = false;
+    let vaasVoteIndex = 0;
+    // Author-data cache to limit API calls
+    const vaasAuthorCache = {};
+
+    // ---------- Heat-scale color table (§9.1) ----------
+    const VAAS_COLORS = [
+        'rgb(255,100,0)',   // 0-1 cool
+        'rgb(255,100,0)',
+        'rgb(255,128,64)',  // 2-4 warm
+        'rgb(255,128,64)',
+        'rgb(255,128,64)',
+        'rgb(253,152,0)',   // 5-7 warmer
+        'rgb(253,152,0)',
+        'rgb(253,152,0)',
+        'rgb(0,253,228)',   // 8-9 hot
+        'rgb(0,253,228)',
+        'rgb(50,132,255)'   // 10 hottest
+    ];
+
+    function vaasHeatColor(colorIndex) {
+        if (colorIndex < 0 || colorIndex > 10) return 'black';
+        return VAAS_COLORS[colorIndex];
+    }
+
+    function vaasHeatAlpha(colorIndex) {
+        // Per spec: 0.5 for all indices except 8-9 which use 0.25
+        return (colorIndex === 8 || colorIndex === 9) ? 0.25 : 0.5;
+    }
+
+    function vaasStrokeWidth(colorIndex) {
+        return 2 + Math.floor((1 + colorIndex) / 2);
+    }
+
+    // ---------- repLog10 (§11.2) ----------
+    function vaasRepLog10(repStr) {
+        if (repStr === '0') return 25.0;
+        let sign = 1;
+        let s = String(repStr);
+        if (s.startsWith('-')) { sign = -1; s = s.substring(1); }
+        const leadingDigits = parseInt(s.substring(0, Math.min(4, s.length)), 10);
+        let log = Math.log10(leadingDigits) + 0.00000001;
+        const n = s.length - 1;
+        const logValue = n + (log - Math.floor(log));
+        let out = Math.max(logValue - 9, 0) * sign;
+        out = out * 9 + 25;
+        return Math.round(out * 100) / 100;  // HALF_UP, 2 decimals
+    }
+
+    // ---------- Median helper ----------
+    function vaasMedian(arr) {
+        if (!arr || arr.length === 0) return 24.99;  // deliberately below 25 threshold
+        const sorted = arr.slice().sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        if (sorted.length % 2 === 1) return sorted[mid];
+        return (sorted[mid - 1] + sorted[mid]) / 2;
+    }
+
+    // ---------- Steem path / URL extraction (§3.2) ----------
+    function vaasExtractSteemPath(memo) {
+        // Formats: /tag/@author/rest, /@author/rest, https://website/tag/@author/rest,
+        //          https://website/@author/rest, @author/rest
+        const patterns = [
+            /(?:https?:\/\/[^\s\/]+\/)?(?:[^\s\/]+\/)?@([a-z0-9.-]+)\/([^\s]+)/i,
+            /(?:https?:\/\/[^\s\/]+\/)?@([a-z0-9.-]+)\/([^\s]+)/i,
+            /@([a-z0-9.-]+)\/([^\s]+)/i
+        ];
+        for (const re of patterns) {
+            const m = memo.match(re);
+            if (m) {
+                // Strip leading website portion if present
+                let path = m[0];
+                const hostMatch = path.match(/^https?:\/\/[^\s\/]+/i);
+                if (hostMatch) path = path.substring(hostMatch[0].length);
+                if (!path.startsWith('/')) path = '/' + path;
+                return path;
+            }
+        }
+        return null;
+    }
+
+    function vaasExtractURL(memo) {
+        const re = /(?:https?|ftp):\/\/[^\s]+/i;
+        const m = memo.match(re);
+        return m ? m[0] : null;
+    }
+
+    function vaasParseSteemPath(path) {
+        // path like "/tag/@author/permlink" or "/@author/permlink"
+        const m = path.match(/@([a-z0-9.-]+)\/([^\s]+)/i);
+        if (!m) return null;
+        return { author: m[1], permlink: m[2] };
+    }
+
+    // ---------- Age decay (§5) ----------
+    function vaasAdjustedNullBenWeight(post, currentBlock) {
+        let adjusted = post.nullBenWeight;
+        let timeFactor = currentBlock - post.blockNumber;
+        while (timeFactor > VAAS_CONFIG.HALFLIFE_BLOCKS) {
+            timeFactor -= VAAS_CONFIG.HALFLIFE_BLOCKS;
+            adjusted = Math.floor(adjusted / 2);  // integer division
+        }
+        return adjusted;
+    }
+
+    function vaasAdjustedPromoWeight(memo, currentBlock) {
+        let adjusted = memo.xferNormal;
+        let timeFactor = currentBlock - memo.blockNumber;
+        while (timeFactor > VAAS_CONFIG.HALFLIFE_BLOCKS) {
+            timeFactor -= VAAS_CONFIG.HALFLIFE_BLOCKS;
+            adjusted = adjusted / 2.0;  // floating-point division
+        }
+        return adjusted;
+    }
+
+    // ---------- Expiry trimming (§5.3) ----------
+    function vaasTrimPosts() {
+        vaasPostPool = vaasPostPool.filter(p => (vaasCurrentBlock - p.blockNumber) <= VAAS_CONFIG.MAXLIFE_BLOCKS);
+    }
+
+    function vaasTrimMemos() {
+        vaasMemoPool = vaasMemoPool.filter(m => (vaasCurrentBlock - m.blockNumber) <= VAAS_CONFIG.MAXLIFE_BLOCKS);
+    }
+
+    // ---------- Weighted random selection (§8) ----------
+    function vaasGetRandomPost() {
+        if (vaasPostPool.length === 0) return null;
+        let totalWeight = 0;
+        for (const post of vaasPostPool) {
+            totalWeight += vaasAdjustedNullBenWeight(post, vaasCurrentBlock);
+        }
+        let randomValue = Math.floor(Math.random() * (totalWeight + 1));  // [0, totalWeight]
+        let postIndex = 0;
+        while (randomValue > 0 && postIndex < vaasPostPool.length) {
+            const post = vaasPostPool[postIndex];
+            postIndex += 1;
+            randomValue -= vaasAdjustedNullBenWeight(post, vaasCurrentBlock);
+        }
+        return vaasPostPool[postIndex - 1];
+    }
+
+    function vaasGetRandomMemo() {
+        if (vaasMemoPool.length === 0) return null;
+        let totalWeight = 0.0;
+        for (const memo of vaasMemoPool) {
+            totalWeight += vaasAdjustedPromoWeight(memo, vaasCurrentBlock);
+        }
+        let randomValue = Math.random() * totalWeight;  // [0, totalWeight)
+        let memoIndex = 0;
+        while (randomValue > 0.0 && memoIndex < vaasMemoPool.length) {
+            const memo = vaasMemoPool[memoIndex];
+            memoIndex += 1;
+            randomValue -= vaasAdjustedPromoWeight(memo, vaasCurrentBlock);
+        }
+        return vaasMemoPool[memoIndex - 1];
+    }
+
+    // ---------- Type selection (§6) ----------
+    function vaasSelectType() {
+        const numTypes = 3;
+        let vaasType = Math.floor(Math.random() * numTypes);  // 0, 1, or 2
+        let checkType = vaasType;
+        for (let lcv = 0; lcv < numTypes; lcv++) {
+            if (checkType === 0) {
+                if (vaasPostPool.length !== 0) return checkType;
+                checkType = checkType + 1;
+            } else if (checkType === 1 || checkType === 2) {
+                if (vaasMemoPool.length !== 0) return checkType;
+                checkType = checkType + 1;
+            }
+            if (checkType === numTypes) checkType = 0;  // wrap around
+        }
+        return vaasType;  // all pools empty; caller handles
+    }
+
+    // ---------- API helpers ----------
+    async function vaasRpc(method, params) {
+        const resp = await fetch(VAAS_CONFIG.NODE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', method, params, id: 1 })
+        });
+        const data = await resp.json();
+        if (data && data.error) throw new Error(data.error.message || 'RPC error');
+        return data && data.result;
+    }
+
+    async function vaasFetchAuthorData(author) {
+        if (vaasAuthorCache[author]) return vaasAuthorCache[author];
+        const result = { reputation: 0, followers: 0, medianRep: 24.99 };
+        try {
+            // Reputation
+            const repRes = await vaasRpc('condenser_api.get_account_reputations', [author, 1]);
+            if (repRes && repRes.length > 0 && repRes[0].reputation) {
+                result.reputation = vaasRepLog10(repRes[0].reputation);
+            }
+            // Follower count
+            const folRes = await vaasRpc('follow_api.get_follow_count', [author]);
+            if (folRes && folRes.follower_count) {
+                result.followers = folRes.follower_count;
+            }
+            // Median follower reputation (paginated, capped)
+            const reps = [];
+            let start = null;
+            for (let page = 0; page < 5; page++) {  // cap at 5 pages (5000 followers)
+                const params = { account: author, start, type: 'blog', limit: 1000 };
+                const fol = await vaasRpc('follow_api.get_followers', params);
+                if (!fol || fol.length === 0) break;
+                for (const f of fol) {
+                    if (typeof f.reputation !== 'undefined') reps.push(parseInt(f.reputation, 10));
+                }
+                start = fol[fol.length - 1].follower;
+                if (fol.length < 1000) break;
+            }
+            result.medianRep = vaasMedian(reps);
+        } catch (e) {
+            console.error('VAAS author data error:', e);
+        }
+        vaasAuthorCache[author] = result;
+        return result;
+    }
+
+    async function vaasFetchPostMetadata(author, permlink) {
+        let post = null;
+        for (let attempt = 0; attempt < 5; attempt++) {  // 5 retries
+            try {
+                post = await vaasRpc('condenser_api.get_content', [author, permlink]);
+                if (post) break;
+            } catch (e) { /* retry */ }
+            await sleep(300);
+        }
+        if (!post) return null;
+        const payoutMatch = String(post.pending_payout_value || '0').match(/^([\d.]+)/);
+        return {
+            title: post.title || '',
+            pendingPayout: payoutMatch ? parseFloat(payoutMatch[1]) : 0,
+            netVotes: parseInt(post.net_votes, 10) || 0,
+            url: post.url || `/${author}/${permlink}`
+        };
+    }
+
+    async function vaasFetchFeedHistory() {
+        try {
+            const res = await vaasRpc('condenser_api.get_feed_history', []);
+            if (res && res.price_history && res.price_history.length > 0) {
+                const ratios = [];
+                for (const entry of res.price_history) {
+                    const q = String(entry.quote || '').match(/^([\d.]+)/);
+                    const b = String(entry.base || '').match(/^([\d.]+)/);
+                    if (q && b && parseFloat(b[1]) > 0) {
+                        ratios.push(parseFloat(q[1]) / parseFloat(b[1]));
+                    }
+                }
+                if (ratios.length > 0) vaasSteemPerSbd = vaasMedian(ratios);
+            }
+        } catch (e) { /* keep fallback */ }
+    }
+
+    // ---------- Pool building (§3) ----------
+    async function vaasProcessBlockOps(ops, blockNum) {
+        for (const opEntry of ops) {
+            const opTuple = opEntry && opEntry.op;
+            if (!Array.isArray(opTuple) || opTuple.length < 2) continue;
+            const opName = opTuple[0];
+            const opData = opTuple[1];
+            if (!opData) continue;
+
+            if (opName === 'comment_options') {
+                // Pool A — null beneficiary detection
+                const extensions = opData.extensions;
+                if (!Array.isArray(extensions)) continue;
+                let nullWeight = -1;
+                for (const ext of extensions) {
+                    if (!Array.isArray(ext) || ext.length < 2) continue;
+                    const val = ext[1];
+                    if (val && Array.isArray(val.beneficiaries)) {
+                        for (const ben of val.beneficiaries) {
+                            if (ben && ben.account === 'null') {
+                                nullWeight = parseInt(ben.weight, 10) || 0;
+                            }
+                        }
+                    }
+                }
+                if (nullWeight === -1) continue;
+                // Quality gates
+                const authorData = await vaasFetchAuthorData(opData.author);
+                if (authorData.reputation <= VAAS_CONFIG.MINREP) continue;
+                if (authorData.followers <= VAAS_CONFIG.MIN_FOLLOWERS) continue;
+                if (authorData.medianRep <= VAAS_CONFIG.MIN_MED_FOLLOWER_REP) continue;
+                vaasPostPool.push({
+                    author: opData.author,
+                    permlink: opData.permlink,
+                    nullBenWeight: nullWeight,
+                    blockNumber: blockNum
+                });
+            } else if (opName === 'transfer') {
+                // Pool B — promo/vanity transfers to null with non-blank memo
+                if (opData.to !== 'null') continue;
+                const memo = String(opData.memo || '').trim();
+                if (memo === '') continue;
+                const parts = String(opData.amount || '').split(' ');
+                const amount = parseFloat(parts[0]) || 0;
+                const type = parts[1] || 'STEEM';
+                let xferNormal = amount;
+                if (type === 'SBD') xferNormal = amount * vaasSteemPerSbd;
+                vaasMemoPool.push({
+                    xferFrom: opData.from,
+                    xferTo: 'null',
+                    xferMemo: memo,
+                    xferType: type,
+                    xferAmount: amount,
+                    xferNormal: xferNormal,
+                    blockNumber: blockNum,
+                    firstURL: vaasExtractURL(memo),
+                    firstSteemPath: vaasExtractSteemPath(memo)
+                });
+            }
+        }
+    }
+
+    // ---------- Display rendering ----------
+    function vaasSetScrollText(elId, text) {
+        const el = document.getElementById(elId);
+        if (el) {
+            el.textContent = text;
+            // Restart animation
+            el.style.animation = 'none';
+            void el.offsetWidth;
+            el.style.animation = '';
+        }
+    }
+
+    function vaasApplyBorder(holderId, colorIndex) {
+        const holder = document.getElementById(holderId);
+        if (!holder) return;
+        const color = vaasHeatColor(colorIndex);
+        const alpha = vaasHeatAlpha(colorIndex);
+        const width = vaasStrokeWidth(colorIndex);
+        holder.style.borderColor = color;
+        holder.style.borderWidth = width + 'px';
+        holder.style.boxShadow = `0 0 12px rgba(0,0,0,0.3)`;
+    }
+
+    function vaasShowEmpty() {
+        document.getElementById('vaas-ben-holder').classList.add('hidden');
+        document.getElementById('vaas-promo-holder').classList.add('hidden');
+        document.getElementById('vaas-suggest-btn').classList.add('hidden');
+        document.getElementById('vaas-vote-table').classList.add('hidden');
+        document.getElementById('vaas-empty').classList.remove('hidden');
+    }
+
+    function vaasShowBeneficiaryPost(post) {
+        const benHolder = document.getElementById('vaas-ben-holder');
+        const promoHolder = document.getElementById('vaas-promo-holder');
+        const empty = document.getElementById('vaas-empty');
+        empty.classList.add('hidden');
+        promoHolder.classList.add('hidden');
+        benHolder.classList.remove('hidden');
+        document.getElementById('vaas-suggest-btn').classList.remove('hidden');
+
+        const nullWeight = post.nullBenWeight / 100.0;
+        const colorIndex = Math.floor(nullWeight / 10);
+        vaasApplyBorder('vaas-ben-holder', colorIndex);
+
+        document.getElementById('vaas-ben-heading').textContent = `🔥 @null Beneficiary Post — ${nullWeight.toFixed(1)}% burn`;
+        vaasSetScrollText('vaas-ben-scroll', post.title || '(untitled)');
+
+        const details = document.getElementById('vaas-ben-details');
+        details.innerHTML = `
+            <span>Author: <strong>@${post.author}</strong></span>
+            <span>Rep: <strong>${post.authorReputation.toFixed(2)}</strong></span>
+            <span>Followers: <strong>${post.authorFollowers.toLocaleString()}</strong></span>
+            <span>Med Follower Rep: <strong>${post.medianRepOfFollowers.toFixed(2)}</strong></span>
+            <span>Payout: <strong>${post.pendingPayout.toFixed(3)} SBD</strong></span>
+            <span>Votes: <strong>${post.netVotes.toLocaleString()}</strong></span>
+        `;
+
+        const link = document.getElementById('vaas-ben-link');
+        link.href = VAAS_CONFIG.URL_LEFT + post.steemURL;
+        link.textContent = 'View on Steem →';
+
+        // Vote index (§10.1)
+        const medianFollowerRep = Math.round(post.medianRepOfFollowers);
+        vaasVoteIndex =
+            ((post.authorReputation - 25) / 75.0)
+            * (Math.log2(Math.max(1, post.authorFollowers)))
+            * ((medianFollowerRep - 25.0) / 75.0)
+            * ((1 + nullWeight) / 100);
+        vaasRenderVoteTable();
+    }
+
+    function vaasShowPromoMemo(memo) {
+        const benHolder = document.getElementById('vaas-ben-holder');
+        const promoHolder = document.getElementById('vaas-promo-holder');
+        const empty = document.getElementById('vaas-empty');
+        empty.classList.add('hidden');
+        benHolder.classList.add('hidden');
+        promoHolder.classList.remove('hidden');
+        document.getElementById('vaas-suggest-btn').classList.add('hidden');
+        document.getElementById('vaas-vote-table').classList.add('hidden');
+
+        // Total promo amount for the (from, memo) pair
+        let burnAmount = 0;
+        for (const m of vaasMemoPool) {
+            if (m.xferFrom === memo.xferFrom && m.xferMemo === memo.xferMemo) {
+                burnAmount += m.xferNormal;
+            }
+        }
+
+        // Heat color by burn amount (§9.2 step 4)
+        let colorIndex;
+        if (burnAmount < 0.001) colorIndex = 0;
+        else if (burnAmount < 0.1) colorIndex = 2;
+        else if (burnAmount < 10) colorIndex = 5;
+        else if (burnAmount < 100) colorIndex = 8;
+        else colorIndex = 10;
+        vaasApplyBorder('vaas-promo-holder', colorIndex);
+
+        const details = document.getElementById('vaas-promo-details');
+        const link = document.getElementById('vaas-promo-link');
+
+        if (memo.firstSteemPath) {
+            // Post promotion branch
+            const parsed = vaasParseSteemPath(memo.firstSteemPath);
+            if (parsed) {
+                document.getElementById('vaas-promo-heading').textContent = `📢 Promo: ${burnAmount.toFixed(3)} STEEM`;
+                vaasSetScrollText('vaas-promo-scroll', `@${parsed.author} — ${memo.xferMemo}`);
+                details.innerHTML = `
+                    <span>Author: <strong>@${parsed.author}</strong></span>
+                    <span>Rep: <strong>${memo.authorReputation ? memo.authorReputation.toFixed(2) : '—'}</strong></span>
+                    <span>Followers: <strong>${memo.authorFollowers ? memo.authorFollowers.toLocaleString() : '—'}</strong></span>
+                    <span>Med Follower Rep: <strong>${memo.medianRepOfFollowers ? memo.medianRepOfFollowers.toFixed(2) : '—'}</strong></span>
+                    <span>Payout: <strong>${memo.pendingPayout ? memo.pendingPayout.toFixed(3) : '—'} SBD</strong></span>
+                    <span>Votes: <strong>${memo.netVotes ? memo.netVotes.toLocaleString() : '—'}</strong></span>
+                `;
+                // Click-through uses the memo's extracted Steem path
+                let path = memo.firstSteemPath;
+                if (!path.startsWith('/')) path = '/' + path;
+                link.href = VAAS_CONFIG.URL_LEFT + path;
+                link.textContent = 'View Promoted Post →';
+                // Vote index (§10.2)
+                if (memo.authorReputation && memo.authorFollowers && memo.medianRepOfFollowers) {
+                    vaasVoteIndex =
+                        ((memo.authorReputation - 25) / 75.0)
+                        * (Math.log2(Math.max(1, memo.authorFollowers)))
+                        * ((memo.medianRepOfFollowers - 25.0) / 75.0)
+                        * Math.min(1, memo.xferNormal / 0.1);
+                } else {
+                    vaasVoteIndex = 0;
+                }
+            } else {
+                vaasShowVanity(memo, burnAmount, details, link);
+            }
+        } else {
+            vaasShowVanity(memo, burnAmount, details, link);
+        }
+    }
+
+    function vaasShowVanity(memo, burnAmount, details, link) {
+        document.getElementById('vaas-promo-heading').textContent = `💬 @${memo.xferFrom} says:`;
+        vaasSetScrollText('vaas-promo-scroll', memo.xferMemo);
+        details.innerHTML = `
+            <span>From: <strong>@${memo.xferFrom}</strong></span>
+            <span>Amount: <strong>${memo.xferAmount.toFixed(3)} ${memo.xferType}</strong></span>
+            <span>Normalized: <strong>${memo.xferNormal.toFixed(3)} STEEM</strong></span>
+            <span>Total Promo: <strong>${burnAmount.toFixed(3)} STEEM</strong></span>
+        `;
+        // Click-through priority: memo URL → sender profile
+        if (memo.firstURL) {
+            link.href = memo.firstURL;
+            link.textContent = 'Open URL →';
+        } else {
+            link.href = VAAS_CONFIG.URL_LEFT + '/@' + memo.xferFrom;
+            link.textContent = 'View Profile →';
+        }
+        vaasVoteIndex = 0;
+    }
+
+    // ---------- Vote table (§10.3) ----------
+    function vaasRenderVoteTable() {
+        const body = document.getElementById('vaas-vote-body');
+        const votesPerDay = [12, 24, 36, 48, 60, 72, 84, 96];
+        let html = '';
+        for (const vpd of votesPerDay) {
+            let suggestion = (vpd === 12) ? 100 : Math.round((2000.0 / vpd) * vaasVoteIndex);
+            suggestion = Math.max(0, Math.min(100, suggestion));
+            html += `<tr><td>${vpd}</td><td>${suggestion}%</td></tr>`;
+        }
+        body.innerHTML = html;
+    }
+
+    function toggleVoteTable() {
+        const table = document.getElementById('vaas-vote-table');
+        table.classList.toggle('hidden');
+    }
+
+    // ---------- Display cycle (§7) ----------
+    async function vaasHandleBeneficiaryPost() {
+        if (!vaasChangePost) return;
+        vaasChangePost = false;
+        const post = vaasGetRandomPost();
+        if (!post) {
+            document.getElementById('vaas-ben-holder').classList.add('hidden');
+            document.getElementById('vaas-suggest-btn').classList.add('hidden');
+            return;
+        }
+        // Fetch metadata
+        const meta = await vaasFetchPostMetadata(post.author, post.permlink);
+        if (!meta) return;
+        post.title = meta.title;
+        post.pendingPayout = meta.pendingPayout;
+        post.netVotes = meta.netVotes;
+        post.steemURL = meta.url;
+        const authorData = await vaasFetchAuthorData(post.author);
+        post.authorReputation = authorData.reputation;
+        post.authorFollowers = authorData.followers;
+        post.medianRepOfFollowers = authorData.medianRep;
+        vaasShowBeneficiaryPost(post);
+    }
+
+    async function vaasHandlePromoMemo() {
+        if (!vaasChangePost) return;
+        vaasChangePost = false;
+        document.getElementById('vaas-suggest-btn').classList.add('hidden');
+        document.getElementById('vaas-vote-table').classList.add('hidden');
+        if (vaasMemoPool.length === 0) return;
+        const memo = vaasGetRandomMemo();
+        if (!memo) return;
+        // If memo has a Steem path, fetch post metadata for display
+        if (memo.firstSteemPath) {
+            const parsed = vaasParseSteemPath(memo.firstSteemPath);
+            if (parsed) {
+                const meta = await vaasFetchPostMetadata(parsed.author, parsed.permlink);
+                if (meta) {
+                    memo.pendingPayout = meta.pendingPayout;
+                    memo.netVotes = meta.netVotes;
+                }
+                const authorData = await vaasFetchAuthorData(parsed.author);
+                memo.authorReputation = authorData.reputation;
+                memo.authorFollowers = authorData.followers;
+                memo.medianRepOfFollowers = authorData.medianRep;
+            }
+        }
+        vaasShowPromoMemo(memo);
+    }
+
+    async function vaasDisplayCycle() {
+        // Trim expired items
+        vaasTrimPosts();
+        vaasTrimMemos();
+
+        const vaasType = vaasSelectType();
+        if (vaasType === 0) {
+            await vaasHandleBeneficiaryPost();
+        } else if (vaasType === 1 || vaasType === 2) {
+            await vaasHandlePromoMemo();
+        } else {
+            vaasShowEmpty();
+        }
+
+        // Update status
+        const statusEl = document.getElementById('vaas-status');
+        if (statusEl) {
+            statusEl.textContent = `Block #${vaasCurrentBlock.toLocaleString()} | Posts: ${vaasPostPool.length} | Promos: ${vaasMemoPool.length}`;
+        }
+    }
+
+    // ---------- Blockchain polling ----------
+    async function vaasPollBlock() {
+        if (vaasPolling) return;
+        vaasPolling = true;
+        try {
+            const props = await vaasRpc('condenser_api.get_dynamic_global_properties', []);
+            if (!props || !props.last_irreversible_block_num) return;
+            const lastIrreversible = props.last_irreversible_block_num;
+            if (vaasLastBlockChecked === 0) {
+                vaasLastBlockChecked = lastIrreversible;
+                vaasCurrentBlock = lastIrreversible;
+                return;
+            }
+            if (vaasLastBlockChecked >= lastIrreversible) return;
+            const blockNum = vaasLastBlockChecked + 1;
+            const ops = await vaasRpc('condenser_api.get_ops_in_block', [blockNum, false]);
+            if (ops && Array.isArray(ops)) {
+                await vaasProcessBlockOps(ops, blockNum);
+            }
+            vaasLastBlockChecked = blockNum;
+            vaasCurrentBlock = blockNum;
+
+            // Display cycle (§7)
+            if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 1) {
+                await vaasDisplayCycle();
+            } else if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 2) {
+                vaasChangePost = true;  // re-arm the latch
+            }
+        } catch (e) {
+            console.error('VAAS poll error:', e);
+        } finally {
+            vaasPolling = false;
+        }
+    }
+
+    // ---------- VAAS init ----------
+    async function initVAAS() {
+        try {
+            await vaasFetchFeedHistory();
+            await vaasPollBlock();
+            setInterval(vaasPollBlock, 3000);  // ~1 block per 3s
+        } catch (e) {
+            console.error('VAAS init error:', e);
+            const statusEl = document.getElementById('vaas-status');
+            if (statusEl) statusEl.textContent = 'VAAS initialization failed.';
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        loadUpcomingBlocks();
+        initVAAS();
+    });
 </script>
 </body>
 </html>
