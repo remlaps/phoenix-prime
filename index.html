@@ -1048,7 +1048,9 @@
             postIndex += 1;
             randomValue -= vaasAdjustedNullBenWeight(post, vaasCurrentBlock);
         }
-        return vaasPostPool[postIndex - 1];
+        // Spec §12.3: when randomValue == 0 or all weights decay to 0, the first
+        // item is the fallback (post where iteration stopped).
+        return vaasPostPool[Math.max(0, postIndex - 1)];
     }
 
     function vaasGetRandomMemo() {
@@ -1064,7 +1066,7 @@
             memoIndex += 1;
             randomValue -= vaasAdjustedPromoWeight(memo, vaasCurrentBlock);
         }
-        return vaasMemoPool[memoIndex - 1];
+        return vaasMemoPool[Math.max(0, memoIndex - 1)];
     }
 
     // ---------- Type selection (§6) ----------
