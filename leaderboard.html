@@ -112,6 +112,7 @@
             th, td { padding: 0.45rem 0.5rem; }
         }
     </style>
+    <link rel="stylesheet" href="vaas.css">
 </head>
 <body>
 <div class="app">
@@ -122,6 +123,34 @@
             <a href="index.html">← Phoenix Prime Scanner</a>
         </div>
     </header>
+
+    <!-- ============ VAAS (Visibility as a Service) Section ============ -->
+    <div class="vaas-section" id="vaas-section">
+        <div class="vaas-header">
+            <div class="vaas-title">📡 Visibility as a Service <span class="small">(rotating @null burn & promo content)</span></div>
+            <div class="vaas-status" id="vaas-status">Initializing...</div>
+        </div>
+        <!-- Beneficiary post holder (type 0) -->
+        <div class="vaas-holder hidden" id="vaas-ben-holder">
+            <div class="vaas-heading" id="vaas-ben-heading"></div>
+            <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-ben-scroll"></span></div>
+            <div class="vaas-details" id="vaas-ben-details"></div>
+            <a class="vaas-link" id="vaas-ben-link" href="#" target="_blank" rel="noopener noreferrer">View on Steem →</a>
+            <button class="vaas-suggest-btn hidden" id="vaas-suggest-btn" onclick="VAAS.toggleVoteTable()">💡 Suggest Vote</button>
+            <table class="vaas-vote-table hidden" id="vaas-vote-table">
+                <thead><tr><th>Votes/Day</th><th>Suggested %</th></tr></thead>
+                <tbody id="vaas-vote-body"></tbody>
+            </table>
+        </div>
+        <!-- Promo memo holder (types 1 & 2) -->
+        <div class="vaas-holder hidden" id="vaas-promo-holder">
+            <div class="vaas-heading" id="vaas-promo-heading"></div>
+            <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-promo-scroll"></span></div>
+            <div class="vaas-details" id="vaas-promo-details"></div>
+            <a class="vaas-link" id="vaas-promo-link" href="#" target="_blank" rel="noopener noreferrer">Open →</a>
+        </div>
+        <div class="vaas-empty hidden" id="vaas-empty">No VAAS content available yet — waiting for @null beneficiary posts or promo transfers...</div>
+    </div>
 
     <!-- Time window tabs -->
     <div class="time-tabs" id="time-tabs">
@@ -852,7 +881,9 @@
 
     window.addEventListener('DOMContentLoaded', () => {
         scanTimeWindow('hour');
+        if (window.VAAS) window.VAAS.init();
     });
 </script>
+<script src="vaas.js"></script>
 </body>
 </html>
