@@ -1,27 +1,18 @@
 /* ============ VAAS (Visibility as a Service) Styles ============ */
-.vaas-section { background-color: #111827; border: 1px solid #1f2937; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem; }
-.vaas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+.vaas-section { background-color: #111827; border: 1px solid #1f2937; border-radius: 0.75rem 0.75rem 0 0; padding: 0.75rem; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: calc(100vw - 4rem); max-width: 1400px; z-index: 1000; box-shadow: 0 -4px 20px rgba(0,0,0,0.4); }
+.vaas-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
 .vaas-title { font-size: 1rem; font-weight: 700; color: #f1f5f9; display: flex; align-items: center; gap: 0.5rem; }
 .vaas-title .small { font-size: 0.7rem; font-weight: 400; color: var(--text-muted); }
 .vaas-status { font-size: 0.75rem; color: var(--text-muted); }
-.vaas-holder { border-radius: 0.5rem; padding: 1rem; min-height: 120px; display: flex; flex-direction: column; gap: 0.5rem; border: 2px solid #334155; background-color: var(--card-bg); position: relative; overflow: hidden; }
+.vaas-holder { border-radius: 0.5rem; padding: 0.5rem; min-height: 60px; display: flex; flex-direction: column; gap: 0.25rem; border: 2px solid #334155; background-color: var(--card-bg); position: relative; overflow: hidden; }
 .vaas-holder.hidden { display: none; }
 .vaas-heading { font-size: 0.95rem; font-weight: 700; color: #f8fafc; }
 .vaas-scroll-wrap { overflow: hidden; white-space: nowrap; position: relative; }
 .vaas-scroll-text { display: inline-block; white-space: nowrap; padding-left: 100%; animation: vaas-scroll 20s linear infinite; }
 .vaas-scroll-text.paused { animation-play-state: paused; }
 @keyframes vaas-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-.vaas-details { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; color: var(--text-muted); }
+.vaas-details { display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted); }
 .vaas-details span { white-space: nowrap; }
 .vaas-details strong { color: var(--text-main); font-weight: 600; }
-.vaas-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; font-weight: 600; }
+.vaas-link { font-size: 0.8rem; color: var(--accent); text-decoration: none; font-weight: 600; white-space: nowrap; }
 .vaas-link:hover { text-decoration: underline; }
-.vaas-suggest-btn { align-self: flex-start; padding: 0.4rem 1rem; font-size: 0.8rem; background-color: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 0.375rem; cursor: pointer; font-weight: 600; }
-.vaas-suggest-btn:hover { background-color: var(--accent); color: white; }
-.vaas-suggest-btn.hidden { display: none; }
-.vaas-vote-table { margin-top: 0.75rem; width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-.vaas-vote-table th, .vaas-vote-table td { padding: 0.35rem 0.5rem; border: 1px solid #334155; text-align: center; }
-.vaas-vote-table th { background-color: #1e293b; color: var(--text-muted); font-weight: 700; }
-.vaas-vote-table td { color: var(--text-main); }
-.vaas-vote-table.hidden { display: none; }
-.vaas-empty { color: var(--text-muted); font-style: italic; font-size: 0.85rem; text-align: center; padding: 1rem 0; }

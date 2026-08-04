@@ -77,7 +77,7 @@ A live "ad space" section that rotates between two kinds of @null-related conten
 - **Null-beneficiary posts** — posts whose `comment_options` include the `null` account as a beneficiary (authors "burning" a portion of their rewards). Only posts from authors meeting quality gates (reputation > 45, followers > 20, median follower reputation > 35) are shown.
 - **Promotional transfers / vanity messages** — `transfer` operations to `null` with a non-blank memo. Memos containing a Steem path render as post promotions; others render as `"{from} says: {memo}"` vanity messages.
 
-The VAAS section polls the Steem blockchain in real time, applies age-decay weighting (weight halves every ~1 hour, items expire after ~1 day), and refreshes content every 30 blocks (~90 seconds). It includes heat-scale border colors, a scrolling title animation, click-through links, and an optional "Suggest Vote" table with vote-index scoring.
+The VAAS section polls the Steem blockchain in real time, applies age-decay weighting (weight halves every ~1 hour, items expire after ~1 day), and refreshes content every 30 blocks (~90 seconds). It includes heat-scale border colors, a scrolling title animation, and click-through links.
 
 ---
 

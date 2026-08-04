@@ -22,11 +22,10 @@
         memoPool: [],      // Pool B — promo/vanity transfers
         changePost: true,
         lastBlockChecked: 0,
-        steemPerSbd: 7.5,  // fallback; updated from feed history
+        lastIrreversibleBlock: 0,
+        steemPerSbd: 9.5,  // fallback; updated from feed history
         currentBlock: 0,
         polling: false,
-        voteIndex: 0,
-        voteRows: [],      // persisted suggested-vote rows
         displayType: null, // 'ben' | 'promo' | null
         displayData: null  // serializable payload for the current display
     };
@@ -335,22 +334,6 @@
         }
     }
 
-    // ---------- Vote table (§10.3) ----------
-    function renderVoteTable() {
-        const body = document.getElementById('vaas-vote-body');
-        if (!body) return;
-        let html = '';
-        for (const row of state.voteRows) {
-            html += `<tr><td>${row.vpd}</td><td>${row.suggestion}%</td></tr>`;
-        }
-        body.innerHTML = html;
-    }
-
-    function toggleVoteTable() {
-        const table = document.getElementById('vaas-vote-table');
-        if (table) table.classList.toggle('hidden');
-    }
-
     function setScrollText(elId, text) {
         const el = document.getElementById(elId);
         if (el) {
@@ -372,36 +355,23 @@
     function showEmpty() {
         const ben = document.getElementById('vaas-ben-holder');
         const promo = document.getElementById('vaas-promo-holder');
-        const suggest = document.getElementById('vaas-suggest-btn');
-        const table = document.getElementById('vaas-vote-table');
-        const empty = document.getElementById('vaas-empty');
         if (ben) ben.classList.add('hidden');
         if (promo) promo.classList.add('hidden');
-        if (suggest) suggest.classList.add('hidden');
-        if (table) table.classList.add('hidden');
-        if (empty) empty.classList.remove('hidden');
     }
 
-    function buildVoteRows(voteIndex) {
-        const votesPerDay = [12, 24, 36, 48, 60, 72, 84, 96];
-        return votesPerDay.map(vpd => {
-            let suggestion = (vpd === 12) ? 100 : Math.round((2000.0 / vpd) * voteIndex);
-            suggestion = Math.max(0, Math.min(100, suggestion));
-            return { vpd, suggestion };
-        });
+    function updateStatus() {
+        const statusEl = document.getElementById('vaas-status');
+        if (statusEl) {
+            const promos = state.memoPool.filter(m => m.firstSteemPath).length;
+            const broadcasts = state.memoPool.filter(m => !m.firstSteemPath).length;
+            statusEl.textContent = `Block #${state.currentBlock.toLocaleString()} | Posts: ${state.postPool.length} | Promos: ${promos} | Broadcasts: ${broadcasts}`;
+        }
     }
 
     // ---------- Display (§9) ----------
     function computeBenDisplay(post, authorData) {
         const nullWeight = post.nullBenWeight / 100.0;
         const colorIndex = Math.floor(nullWeight / 10);
-        const medianFollowerRep = Math.round(authorData.medianRep);
-        const voteIndex = Math.max(0,
-            ((authorData.reputation - 25) / 75.0)
-            * (Math.log2(Math.max(1, authorData.followers)))
-            * ((medianFollowerRep - 25.0) / 75.0)
-            * ((1 + nullWeight) / 100)
-        );
         return {
             type: 'ben',
             heading: `🔥 @null Beneficiary Post — ${nullWeight.toFixed(1)}% burn`,
@@ -416,8 +386,7 @@
                 { label: 'Votes', value: post.netVotes.toLocaleString() }
             ],
             linkText: 'View on Steem →',
-            linkHref: VAAS_CONFIG.URL_LEFT + post.steemURL,
-            voteRows: buildVoteRows(voteIndex)
+            linkHref: VAAS_CONFIG.URL_LEFT + post.steemURL
         };
     }
 
@@ -442,7 +411,7 @@
         const parsed = memo.firstSteemPath ? parseSteemPath(memo.firstSteemPath) : null;
         if (parsed) {
             display.heading = `📢 Promo: ${burnAmount.toFixed(3)} STEEM`;
-            display.scrollText = `@${parsed.author} — ${memo.xferMemo}`;
+            display.scrollText = postMeta ? (postMeta.title || '(untitled)') : `@${parsed.author}`;
             display.details = [
                 { label: 'Author', value: `@${parsed.author}` },
                 { label: 'Rep', value: authorData ? authorData.reputation.toFixed(2) : '—' },
@@ -455,17 +424,6 @@
             if (!path.startsWith('/')) path = '/' + path;
             display.linkText = 'View Promoted Post →';
             display.linkHref = VAAS_CONFIG.URL_LEFT + path;
-            // Vote index (§10.2)
-            let voteIndex = 0;
-            if (authorData && authorData.reputation && authorData.followers && authorData.medianRep) {
-                voteIndex = Math.max(0,
-                    ((authorData.reputation - 25) / 75.0)
-                    * (Math.log2(Math.max(1, authorData.followers)))
-                    * ((authorData.medianRep - 25.0) / 75.0)
-                    * Math.min(1, memo.xferNormal / 0.1)
-                );
-            }
-            display.voteRows = buildVoteRows(voteIndex);
         } else {
             display.heading = `💬 @${memo.xferFrom} says:`;
             display.scrollText = memo.xferMemo;
@@ -482,7 +440,6 @@
                 display.linkText = 'View Profile →';
                 display.linkHref = VAAS_CONFIG.URL_LEFT + '/@' + memo.xferFrom;
             }
-            display.voteRows = buildVoteRows(0);
         }
         return display;
     }
@@ -490,11 +447,6 @@
     function renderDisplay(display) {
         const benHolder = document.getElementById('vaas-ben-holder');
         const promoHolder = document.getElementById('vaas-promo-holder');
-        const empty = document.getElementById('vaas-empty');
-        const suggest = document.getElementById('vaas-suggest-btn');
-        const table = document.getElementById('vaas-vote-table');
-
-        if (empty) empty.classList.add('hidden');
 
         if (!display || !display.type) {
             showEmpty();
@@ -504,8 +456,6 @@
         if (display.type === 'ben') {
             if (promoHolder) promoHolder.classList.add('hidden');
             if (benHolder) benHolder.classList.remove('hidden');
-            if (suggest) suggest.classList.remove('hidden');
-            if (table) table.classList.add('hidden');
             applyBorder('vaas-ben-holder', display.colorIndex);
             const h = document.getElementById('vaas-ben-heading');
             if (h) h.textContent = display.heading;
@@ -514,16 +464,11 @@
             if (d) d.innerHTML = display.details.map(x => `<span>${x.label}: <strong>${x.value}</strong></span>`).join('');
             const l = document.getElementById('vaas-ben-link');
             if (l) { l.href = display.linkHref; l.textContent = display.linkText; }
-            // Suggest-vote data persisted for the toggle
             state.displayType = 'ben';
             state.displayData = display;
-            state.voteRows = display.voteRows || [];
-            renderVoteTable();
         } else {
             if (benHolder) benHolder.classList.add('hidden');
             if (promoHolder) promoHolder.classList.remove('hidden');
-            if (suggest) suggest.classList.add('hidden');
-            if (table) table.classList.add('hidden');
             applyBorder('vaas-promo-holder', display.colorIndex);
             const h = document.getElementById('vaas-promo-heading');
             if (h) h.textContent = display.heading;
@@ -534,7 +479,6 @@
             if (l) { l.href = display.linkHref; l.textContent = display.linkText; }
             state.displayType = 'promo';
             state.displayData = display;
-            state.voteRows = display.voteRows || [];
         }
     }
 
@@ -562,8 +506,6 @@
     async function handlePromoMemo() {
         if (!state.changePost) return;
         state.changePost = false;
-        document.getElementById('vaas-suggest-btn')?.classList.add('hidden');
-        document.getElementById('vaas-vote-table')?.classList.add('hidden');
         if (state.memoPool.length === 0) { showEmpty(); return; }
         const memo = getRandomMemo();
         if (!memo) return;
@@ -591,10 +533,7 @@
         } else {
             showEmpty();
         }
-        const statusEl = document.getElementById('vaas-status');
-        if (statusEl) {
-            statusEl.textContent = `Block #${state.currentBlock.toLocaleString()} | Posts: ${state.postPool.length} | Promos: ${state.memoPool.length}`;
-        }
+        updateStatus();
     }
 
     // ---------- Blockchain polling ----------
@@ -605,9 +544,11 @@
             const props = await rpc('condenser_api.get_dynamic_global_properties', []);
             if (!props || !props.last_irreversible_block_num) return;
             const lastIrreversible = props.last_irreversible_block_num;
+            state.lastIrreversibleBlock = lastIrreversible;
             if (state.lastBlockChecked === 0) {
                 state.lastBlockChecked = lastIrreversible;
                 state.currentBlock = lastIrreversible;
+                updateStatus();
                 return;
             }
             if (state.lastBlockChecked >= lastIrreversible) return;
@@ -618,6 +559,7 @@
             }
             state.lastBlockChecked = blockNum;
             state.currentBlock = blockNum;
+            updateStatus();
 
             if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 1) {
                 await displayCycle();
@@ -672,13 +614,19 @@
     async function init() {
         try {
             const restored = restoreShared();
-            const statusEl = document.getElementById('vaas-status');
-            if (restored && statusEl) {
-                statusEl.textContent = `Block #${state.currentBlock.toLocaleString()} | Posts: ${state.postPool.length} | Promos: ${state.memoPool.length}`;
+            if (restored) {
+                updateStatus();
             }
             await fetchFeedHistory();
             await pollBlock();
-            setInterval(pollBlock, 3000);
+            const scheduleNextPoll = () => {
+                const behind = state.lastIrreversibleBlock && state.lastBlockChecked < state.lastIrreversibleBlock;
+                setTimeout(async () => {
+                    await pollBlock();
+                    scheduleNextPoll();
+                }, behind ? 1000 : 3000);
+            };
+            scheduleNextPoll();
         } catch (e) {
             console.error('VAAS init error:', e);
             const statusEl = document.getElementById('vaas-status');
@@ -687,7 +635,6 @@
     }
 
     window.VAAS = {
-        init,
-        toggleVoteTable
+        init
     };
 })();

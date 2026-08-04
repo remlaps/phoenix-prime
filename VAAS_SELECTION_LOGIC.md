@@ -6,7 +6,7 @@ If you have access to the original code, the canonical implementation can be cro
 
 | File | Role |
 |---|---|
-| `src/main/java/steemometer/Steemometer.java` | Display loop; type selection; 30-block refresh cadence; vote-index scoring; promo-memo rendering decisions |
+| `src/main/java/steemometer/Steemometer.java` | Display loop; type selection; 30-block refresh cadence; promo-memo rendering decisions |
 | `src/main/java/steemometer/CountOps.java` | Blockchain polling; building the two candidate pools |
 | `src/main/java/steemometer/PostDisplayManager.java` | Weighted-random selection + expiry trimming for beneficiary posts |
 | `src/main/java/steemometer/XferMemoManager.java` | Weighted-random selection + expiry trimming for promo/vanity transfers |
@@ -93,7 +93,7 @@ Two in-memory pools are maintained and updated continuously as blocks are scanne
 | Follower count | `MIN_FOLLOWERS_FOR_BEN_DISPLAY = 20` | `followerCount > 20` |
 | Median follower reputation | `MED_FOLLOWER_REP_FOR_BEN_DISPLAY = 35.0` | `medianFollowerRep > 35.0` |
 
-(The reputation here is the "display" reputation, roughly 0–75+, computed from the raw Steem reputation string — see §11.2. The median follower reputation uses a similar scale.)
+(The reputation here is the "display" reputation, roughly 0–75+, computed from the raw Steem reputation string — see §10.2. The median follower reputation uses a similar scale.)
 
 **Record stored for each accepted post:**
 - `author`, `permlink` (from the operation data), `nullBenWeight` (the null beneficiary weight found), `blockNumber` (the block that contained the `comment_options` op).
@@ -336,9 +336,9 @@ When a random post is selected and `changePost` is true:
    - `pending_payout_value` (numeric part of e.g. `"12.345 SBD"`) → pending payout.
    - `net_votes` (int) → net votes.
    - `url` field (e.g. `"/@author/permlink"`) → the Steem URL used for the click-through link.
-2. **Fetch author reputation** via `condenser_api.get_account_reputations` (params `[author, 1]`), converted to display reputation via `repLog10` (§11.2).
+2. **Fetch author reputation** via `condenser_api.get_account_reputations` (params `[author, 1]`), converted to display reputation via `repLog10` (§10.2).
 3. **Fetch follower count** via `follow_api.get_follow_count` (params `[author]`).
-4. **Fetch median follower reputation** and follower count via `follow_api.get_followers` (params `{account, type:"blog", limit:1000}`, paginated) — median of follower reputations (§11.3).
+4. **Fetch median follower reputation** and follower count via `follow_api.get_followers` (params `{account, type:"blog", limit:1000}`, paginated) — median of follower reputations (§10.3).
 5. **Null fraction label:** `nullWeight = nullBenWeight / 100.0` (so 2500 → 25.0) — displayed as the `@null%` value.
 6. **Border color (heat scale)** — based on `colorIndex = floor(nullWeight / 10)`:
 
@@ -353,10 +353,9 @@ When a random post is selected and `changePost` is true:
 
    The source expresses the stroke/fill opacity as `0.5 + (5 * colorIndex) / 100` for colorIndex 0–7 and 9–10, and `0.25 + (5 * colorIndex) / 100` for colorIndex 8–9. NOTE: in Java, `(5 * colorIndex) / 100` is an **integer division** (5 × 10 = 50 max), so the term is always 0 and the alpha values in effect are `0.5` and `0.25` respectively — reproduce accordingly (0.5 for all indices except 8–9, which use 0.25). Stroke width = `2 + floor((1 + colorIndex) / 2)`.
 
-7. **Vote-index score** — see §10.1. The score drives the optional "suggested vote" table (§10.3).
-8. Show the beneficiary post holder, hide the promo holder; make the "Suggest vote" button visible.
-9. Start the scrolling title animation (scroll across the VAAS area over `VAAS_INTERVAL / 2` seconds, looping).
-10. Click-through target: `webUrl = urlLeft + post.steemURL` (e.g. `https://steemit.com` + `/@author/permlink`).
+7. Show the beneficiary post holder, hide the promo holder.
+8. Start the scrolling title animation (scroll across the VAAS area over `VAAS_INTERVAL / 2` seconds, looping).
+9. Click-through target: `webUrl = urlLeft + post.steemURL` (e.g. `https://steemit.com` + `/@author/permlink`).
 
 ### 9.2 Types 1 & 2 — Promo memo display
 
@@ -370,8 +369,7 @@ When `changePost` is true and the memo pool is non-empty:
    - Parse the referenced post: extract `author` and `permlink` from the path (format `@author/permlink` or `/tag/@author/permlink` → author/permlink; strip any leading `/` or website host).
    - Fetch metadata as in §9.1 (title, pending payout, net votes, URL).
    - Fetch author reputation, follower count, and median follower reputation.
-   - Display: heading `"Promo: <totalNormalizedAmount>"`, the post author, reputation, follower count, median follower rep, pending payout, net votes, and the scrolling post title.
-   - Vote-index score — see §10.2.
+   - Display: heading `"Promo: <totalNormalizedAmount>"`, the post author, reputation, follower count, median follower rep, pending payout, net votes, and the scrolling **post title** (not the transfer memo). If the post metadata fetch fails, fall back to the author handle (e.g. `@author`).
    - Click-through: the **memo's extracted Steem path** (not the fetched post's `url` field), prefixed with `urlLeft` and ensuring a leading `/` (e.g. `steemPath = "@author/permlink"` → `urlLeft + "/@author/permlink"`).
 
    **(b) Memo has no Steem path → vanity message:**
@@ -392,48 +390,13 @@ When `changePost` is true and the memo pool is non-empty:
    | else | 10 |
 
    Then the same color table as §9.1.
-5. Hide the beneficiary post holder; show the promo holder; hide the "Suggest vote" button.
+5. Hide the beneficiary post holder; show the promo holder.
 
 ---
 
-## 10. Scoring Formulas
+## 10. Supporting Lookups (re-implement as needed)
 
-### 10.1 Vote index — beneficiary post
-```
-nullWeight = nullBenWeight / 100.0        // e.g. 2500 → 25.0
-medianFollowerRep = round(medianRepOfFollowers)
-
-voteIndexValue =
-        ((authorReputation - 25) / 75.0)
-      * (log2(followerCount))              // log(followerCount) / log(2)
-      * ((medianFollowerRep - 25.0) / 75.0)
-      * ((1 + nullWeight) / 100)
-```
-
-### 10.2 Vote index — promo post (memo containing a Steem path)
-```
-voteIndexValue =
-        ((authorReputation - 25) / 75.0)
-      * (log2(authorFollowers))
-      * ((medianRepOfFollowers - 25.0) / 75.0)
-      * min(1, (xferNormal_of_selected_memo) / 0.1)
-```
-(Note: this uses the **selected memo's** normalized amount, not the summed total.)
-
-### 10.3 Suggested-vote table (uses `voteIndexValue`)
-
-For votes-per-day in `{12, 24, 36, 48, 60, 72, 84, 96}`:
-```
-voteSuggestion = (votesPerDay == 12) ? 100 : round((2000.0 / votesPerDay) * voteIndexValue)
-clamp voteSuggestion to [0, 100]
-```
-Each row = `(votesPerDay, voteSuggestion)`.
-
----
-
-## 11. Supporting Lookups (re-implement as needed)
-
-### 11.1 Author reputation — `condenser_api.get_account_reputations`
+### 10.1 Author reputation — `condenser_api.get_account_reputations`
 ```
 POST {node}
 Body: {"jsonrpc":"2.0","method":"condenser_api.get_account_reputations",
@@ -441,7 +404,7 @@ Body: {"jsonrpc":"2.0","method":"condenser_api.get_account_reputations",
 ```
 Response `result` is an array; take `result[0].reputation` (a string like `"1234567890123456789"`).
 
-### 11.2 Display reputation conversion — Steem `reputation` → display score
+### 10.2 Display reputation conversion — Steem `reputation` → display score
 
 ```
 function repLog10(repStr):
@@ -462,7 +425,7 @@ function repLog10(repStr):
     return round(out, 2)            // HALF_UP rounding, 2 decimal places
 ```
 
-### 11.3 Follower count — `follow_api.get_follow_count`
+### 10.3 Follower count — `follow_api.get_follow_count`
 ```
 POST {node}
 Body: {"jsonrpc":"2.0","method":"follow_api.get_follow_count",
@@ -470,7 +433,7 @@ Body: {"jsonrpc":"2.0","method":"follow_api.get_follow_count",
 ```
 Response: `result.follower_count` (int).
 
-### 11.4 Median follower reputation — `follow_api.get_followers` (paginated)
+### 10.4 Median follower reputation — `follow_api.get_followers` (paginated)
 ```
 POST {node}
 Body: {"jsonrpc":"2.0","method":"follow_api.get_followers",
@@ -483,9 +446,9 @@ Body: {"jsonrpc":"2.0","method":"follow_api.get_followers",
   - Odd size → middle element.
   - Even size > 0 → average of the two middle elements.
   - Empty list → `24.99` (deliberately below the 25 threshold).
-- Return `[median, listLength]`. The `listLength` (count of followers actually read, in batches of 1000) is used as the author's follower count in some code paths; the separate `follow_api.get_follow_count` call is the authoritative follower count used in the display and in the type-0 vote index.
+- Return `[median, listLength]`. The `listLength` (count of followers actually read, in batches of 1000) is used as the author's follower count in some code paths; the separate `follow_api.get_follow_count` call is the authoritative follower count used in the display.
 
-### 11.5 STEEM/SBD feed ratio — `condenser_api.get_feed_history`
+### 10.5 STEEM/SBD feed ratio — `condenser_api.get_feed_history`
 ```
 POST {node}
 Body: {"jsonrpc":"2.0","method":"condenser_api.get_feed_history","params":[],"id":1}
@@ -494,7 +457,7 @@ From `result.price_history[]`, for each entry with string `quote`/`base` fields 
 
 ---
 
-## 12. Edge Cases & Implementation Notes
+## 11. Edge Cases & Implementation Notes
 
 1. **Empty pools:** never select from an empty pool; the type-fallback loop (§6) handles this by advancing to another type. If all pools are empty, display nothing.
 2. **Blank memo → rejected:** transfers to `null` with blank memos are never added to Pool B.
@@ -510,7 +473,7 @@ From `result.price_history[]`, for each entry with string `quote`/`base` fields 
 
 ---
 
-## 13. Complete Reference Pseudocode
+## 12. Complete Reference Pseudocode
 
 Consolidated, language-agnostic pseudo-code for the whole selection + display pipeline:
 
@@ -604,7 +567,6 @@ function handle_beneficiary_post():
     post = weighted_random_post()        # §8.1
     if post == null:
         hide_beneficiary_holder()
-        hide_suggest_vote_button()
         return
     metadata = fetch_post_metadata(post) # title, payout, votes, url; retry ×5
     post.authorReputation   = fetch_author_reputation(post.author)
@@ -612,8 +574,7 @@ function handle_beneficiary_post():
     [post.medianRepOfFollowers, _] = fetch_median_follower_reputation_and_count(post.author)
     nullWeight = post.nullBenWeight / 100.0
     update_labels(post, nullWeight)
-    score = beneficiary_vote_index(post, nullWeight)     # §10.1
-    show_beneficiary_holder(post, score)
+    show_beneficiary_holder(post)
     start_scroll_animation(post.title, VAAS_INTERVAL / 2)
 
 # ------------------------------------------------------------------
@@ -624,7 +585,6 @@ function handle_promo_memo():
     if not changePost:
         return
     changePost = false
-    hide_suggest_vote_button()
     if memoPool is empty:
         return
     memo = weighted_random_memo()        # §8.2
@@ -637,7 +597,6 @@ function handle_promo_memo():
         post.authorFollowers    = fetch_follower_count(promoAuthor)
         [post.medianRepOfFollowers, _] = fetch_median_follower_reputation_and_count(promoAuthor)
         # display heading "Promo: <burnAmount>", post details, scrolling post title
-        score = promo_vote_index(post, memo.xferNormal)  # §10.2
         # click-through uses the memo's extracted Steem path (not post.steem_url)
         target_url = urlLeft + normalize_steem_path(memo.firstSteemPath)
     else:
@@ -647,12 +606,16 @@ function handle_promo_memo():
             target_url = "/@" + memo.xferFrom
     color = heat_color(by_burn_amount(burnAmount))       # §9.2 step 4
     show_promo_holder(color, burnAmount, target_url, memo)
-    start_scroll_animation(memo.memo or post.title, VAAS_INTERVAL / 2)
+    if memo.firstSteemPath != null:
+        scroll_text = post.title if post else "@{promoAuthor}"
+    else:
+        scroll_text = memo.memo
+    start_scroll_animation(scroll_text, VAAS_INTERVAL / 2)
 ```
 
 ---
 
-## 14. Suggested Acceptance Checklist
+## 13. Suggested Acceptance Checklist
 
 To verify a re-implementation matches the original semantics:
 
@@ -668,4 +631,4 @@ To verify a re-implementation matches the original semantics:
 - [ ] Content changes once per 30-block window (block ≡ 1 mod 30), and no content change occurs at block ≡ 2 mod 30 (only the latch re-arms).
 - [ ] SBD transfer of 0.5 SBD with `steemPerSbd = 7.5` yields `xferNormal = 3.75`.
 - [ ] Blank-memo transfers to `null` never enter Pool B.
-- [ ] A memo with a Steem path renders as a post promo with accumulated Promo amount; a memo without a path renders as `"{from} says: {memo}"`.
+- [ ] A memo with a Steem path renders as a post promo with accumulated Promo amount and the **post title** as scrolling text (not the memo); a memo without a path renders as `"{from} says: {memo}"` with the memo as scrolling text.

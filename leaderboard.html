@@ -48,7 +48,7 @@
             --color-twin: #f0abfc; --bg-twin: #4a0e4e; --border-twin: #86198f;
         }
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0; display: flex; justify-content: center; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 0 0 250px 0; display: flex; justify-content: center; }
         .app { max-width: 1300px; width: 100%; padding: 1.5rem 2rem; }
         header { text-align: center; margin-bottom: 1.5rem; position: relative; }
         h1 { margin-bottom: 0.3rem; color: #f1f5f9; font-size: 1.6rem; }
@@ -124,34 +124,6 @@
         </div>
     </header>
 
-    <!-- ============ VAAS (Visibility as a Service) Section ============ -->
-    <div class="vaas-section" id="vaas-section">
-        <div class="vaas-header">
-            <div class="vaas-title">📡 Visibility as a Service <span class="small">(rotating @null burn & promo content)</span></div>
-            <div class="vaas-status" id="vaas-status">Initializing...</div>
-        </div>
-        <!-- Beneficiary post holder (type 0) -->
-        <div class="vaas-holder hidden" id="vaas-ben-holder">
-            <div class="vaas-heading" id="vaas-ben-heading"></div>
-            <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-ben-scroll"></span></div>
-            <div class="vaas-details" id="vaas-ben-details"></div>
-            <a class="vaas-link" id="vaas-ben-link" href="#" target="_blank" rel="noopener noreferrer">View on Steem →</a>
-            <button class="vaas-suggest-btn hidden" id="vaas-suggest-btn" onclick="VAAS.toggleVoteTable()">💡 Suggest Vote</button>
-            <table class="vaas-vote-table hidden" id="vaas-vote-table">
-                <thead><tr><th>Votes/Day</th><th>Suggested %</th></tr></thead>
-                <tbody id="vaas-vote-body"></tbody>
-            </table>
-        </div>
-        <!-- Promo memo holder (types 1 & 2) -->
-        <div class="vaas-holder hidden" id="vaas-promo-holder">
-            <div class="vaas-heading" id="vaas-promo-heading"></div>
-            <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-promo-scroll"></span></div>
-            <div class="vaas-details" id="vaas-promo-details"></div>
-            <a class="vaas-link" id="vaas-promo-link" href="#" target="_blank" rel="noopener noreferrer">Open →</a>
-        </div>
-        <div class="vaas-empty hidden" id="vaas-empty">No VAAS content available yet — waiting for @null beneficiary posts or promo transfers...</div>
-    </div>
-
     <!-- Time window tabs -->
     <div class="time-tabs" id="time-tabs">
         <button class="time-tab active" data-window="hour">Last Hour</button>
@@ -190,6 +162,32 @@
     </div>
 </div>
 
+<!-- ============ VAAS (Visibility as a Service) Section ============ -->
+<div class="vaas-section" id="vaas-section">
+    <div class="vaas-header">
+        <div class="vaas-title">📡 Visibility as a Service <span class="small">(rotating @null burn & promo content)</span></div>
+        <div class="vaas-status" id="vaas-status">Initializing...</div>
+    </div>
+    <!-- Beneficiary post holder (type 0) -->
+    <div class="vaas-holder hidden" id="vaas-ben-holder">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <div class="vaas-heading" id="vaas-ben-heading"></div>
+            <a class="vaas-link" id="vaas-ben-link" href="#" target="_blank" rel="noopener noreferrer">View on Steem →</a>
+        </div>
+        <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-ben-scroll"></span></div>
+        <div class="vaas-details" id="vaas-ben-details"></div>
+    </div>
+    <!-- Promo memo holder (types 1 & 2) -->
+    <div class="vaas-holder hidden" id="vaas-promo-holder">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">
+            <div class="vaas-heading" id="vaas-promo-heading"></div>
+            <a class="vaas-link" id="vaas-promo-link" href="#" target="_blank" rel="noopener noreferrer">Open →</a>
+        </div>
+        <div class="vaas-scroll-wrap"><span class="vaas-scroll-text" id="vaas-promo-scroll"></span></div>
+        <div class="vaas-details" id="vaas-promo-details"></div>
+    </div>
+</div>
+
 <script>
     // ============================================================
     //  MATHEMATICAL / STRUCTURAL HELPERS (reused from index.html)
@@ -216,7 +214,7 @@
     function countMaxSameDigit(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}let max=0;for(let c in counts){if(counts[c]>max)max=counts[c]}return max}
     function longestConsecutiveRun(str){const d=str.split('').map(Number);let best=1;let curA=1;let curD=1;for(let i=1;i<d.length;i++){if(d[i]===d[i-1]+1){curA++;curD=1}else if(d[i]===d[i-1]-1){curD++;curA=1}else{curA=1;curD=1}if(curA>best)best=curA;if(curD>best)best=curD}return best}
     function hasUnorderedStraight(str,minLen){const unique=[...new Set(str.split('').map(Number))].sort((a,b)=>a-b);if(unique.length<minLen)return false;let best=1;let cur=1;for(let i=1;i<unique.length;i++){if(unique[i]===unique[i-1]+1){cur++;if(cur>best)best=cur}else{cur=1}if(best>=minLen)return true}return best>=minLen}
-    function isFullHouse(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a===3&&b===2)return true}return false}
+    function isFullHouse(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=3&&b>=2)return true}return false}
     function isExtendedFullHouse(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=4&&b>=3)return true;if(a>=5&&b>=4)return true}return false}
     function isFullHouse54(str){const counts={};for(let c of str){counts[c]=(counts[c]||0)+1}const vals=Object.values(counts).sort((a,b)=>b-a);if(vals.length>=2){const a=vals[0],b=vals[1];if(a>=5&&b>=4)return true;if(a>=6&&b>=5)return true}return false}
     const sleep=ms=>new Promise(r=>setTimeout(r,ms));
