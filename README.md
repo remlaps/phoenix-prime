@@ -71,6 +71,14 @@ Before scanning, select a time range from the filter bar (All Time / 1 Day / 7 D
 ### Upcoming Special Blocks Sidebar
 A right sidebar automatically fetches the last irreversible block from the Steem API and analyzes the next 4,800 blocks (~4 hours). Block numbers with special mathematical or structural properties are listed with compact badge labels. Refresh the sidebar at any time with the Refresh button.
 
+### Visibility as a Service (VAAS)
+A live "ad space" section that rotates between two kinds of @null-related content, implementing the selection logic described in `VAAS_SELECTION_LOGIC.md`:
+
+- **Null-beneficiary posts** — posts whose `comment_options` include the `null` account as a beneficiary (authors "burning" a portion of their rewards). Only posts from authors meeting quality gates (reputation > 45, followers > 20, median follower reputation > 35) are shown.
+- **Promotional transfers / vanity messages** — `transfer` operations to `null` with a non-blank memo. Memos containing a Steem path render as post promotions; others render as `"{from} says: {memo}"` vanity messages.
+
+The VAAS section polls the Steem blockchain in real time, applies age-decay weighting (weight halves every ~1 hour, items expire after ~1 day), and refreshes content every 30 blocks (~90 seconds). It includes heat-scale border colors, a scrolling title animation, and click-through links.
+
 ---
 
 ## How it Works
