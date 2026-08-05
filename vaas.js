@@ -250,10 +250,21 @@
         const payoutMatch = String(post.pending_payout_value || '0').match(/^([\d.]+)/);
         return {
             title: post.title || '',
+            rootAuthor: post.root_author || '',
+            rootTitle: post.root_title || '',
             pendingPayout: payoutMatch ? parseFloat(payoutMatch[1]) : 0,
             netVotes: parseInt(post.net_votes, 10) || 0,
             url: post.url || `/${author}/${permlink}`
         };
+    }
+
+    // Resolve the display title for a post. Blank titles (i.e. replies/comments)
+    // are shown as a reply to the parent post using its root_author + root_title.
+    function resolveTitle(meta) {
+        if (!meta) return '';
+        if (meta.title) return meta.title;
+        if (meta.rootTitle) return `Re: @${meta.rootAuthor}: ${meta.rootTitle}`;
+        return '';
     }
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -375,7 +386,7 @@
         return {
             type: 'ben',
             heading: `🔥 @null Beneficiary Post — ${nullWeight.toFixed(1)}% burn`,
-            scrollText: post.title || '(untitled)',
+            scrollText: resolveTitle(post) || '(untitled)',
             colorIndex,
             details: [
                 { label: 'Author', value: `@${post.author}` },
@@ -411,7 +422,7 @@
         const parsed = memo.firstSteemPath ? parseSteemPath(memo.firstSteemPath) : null;
         if (parsed) {
             display.heading = `📢 Promo: ${burnAmount.toFixed(3)} STEEM`;
-            display.scrollText = postMeta ? (postMeta.title || '(untitled)') : `@${parsed.author}`;
+            display.scrollText = postMeta ? (resolveTitle(postMeta) || '(untitled)') : `@${parsed.author}`;
             display.details = [
                 { label: 'Author', value: `@${parsed.author}` },
                 { label: 'Rep', value: authorData ? authorData.reputation.toFixed(2) : '—' },
@@ -494,6 +505,8 @@
         const meta = await fetchPostMetadata(post.author, post.permlink);
         if (!meta) { showEmpty(); return; }
         post.title = meta.title;
+        post.rootAuthor = meta.rootAuthor;
+        post.rootTitle = meta.rootTitle;
         post.pendingPayout = meta.pendingPayout;
         post.netVotes = meta.netVotes;
         post.steemURL = meta.url;

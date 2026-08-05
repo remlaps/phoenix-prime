@@ -332,7 +332,7 @@ Notes:
 When a random post is selected and `changePost` is true:
 
 1. **Fetch post metadata** via `condenser_api.get_content` with params `[author, permlink]`. Retry up to 5 times if the call returns null. Extract:
-   - `title` → shown in the scrolling ticker.
+   - `title` → shown in the scrolling ticker. **If `title` is blank** (which is the case for replies/comments), also read `root_author` and `root_title`, and show the scrolling text as a reply to the parent post: `Re: @<root_author>: <root_title>`. Only fall back to `(untitled)` if there is no usable title **and** no `root_title`.
    - `pending_payout_value` (numeric part of e.g. `"12.345 SBD"`) → pending payout.
    - `net_votes` (int) → net votes.
    - `url` field (e.g. `"/@author/permlink"`) → the Steem URL used for the click-through link.
@@ -354,7 +354,7 @@ When a random post is selected and `changePost` is true:
    The source expresses the stroke/fill opacity as `0.5 + (5 * colorIndex) / 100` for colorIndex 0–7 and 9–10, and `0.25 + (5 * colorIndex) / 100` for colorIndex 8–9. NOTE: in Java, `(5 * colorIndex) / 100` is an **integer division** (5 × 10 = 50 max), so the term is always 0 and the alpha values in effect are `0.5` and `0.25` respectively — reproduce accordingly (0.5 for all indices except 8–9, which use 0.25). Stroke width = `2 + floor((1 + colorIndex) / 2)`.
 
 7. Show the beneficiary post holder, hide the promo holder.
-8. Start the scrolling title animation (scroll across the VAAS area over `VAAS_INTERVAL / 2` seconds, looping).
+8. Start the scrolling title animation (scroll across the VAAS area over `VAAS_INTERVAL / 2` seconds, looping). The scrolling text is the post `title`; for a blank title it is `Re: @<root_author>: <root_title>` (see step 1).
 9. Click-through target: `webUrl = urlLeft + post.steemURL` (e.g. `https://steemit.com` + `/@author/permlink`).
 
 ### 9.2 Types 1 & 2 — Promo memo display
@@ -369,7 +369,7 @@ When `changePost` is true and the memo pool is non-empty:
    - Parse the referenced post: extract `author` and `permlink` from the path (format `@author/permlink` or `/tag/@author/permlink` → author/permlink; strip any leading `/` or website host).
    - Fetch metadata as in §9.1 (title, pending payout, net votes, URL).
    - Fetch author reputation, follower count, and median follower reputation.
-   - Display: heading `"Promo: <totalNormalizedAmount>"`, the post author, reputation, follower count, median follower rep, pending payout, net votes, and the scrolling **post title** (not the transfer memo). If the post metadata fetch fails, fall back to the author handle (e.g. `@author`).
+   - Display: heading `"Promo: <totalNormalizedAmount>"`, the post author, reputation, follower count, median follower rep, pending payout, net votes, and the scrolling **post title** (not the transfer memo). If the post title is blank, use `Re: @<root_author>: <root_title>` (same rule as §9.1). If the post metadata fetch fails, fall back to the author handle (e.g. `@author`).
    - Click-through: the **memo's extracted Steem path** (not the fetched post's `url` field), prefixed with `urlLeft` and ensuring a leading `/` (e.g. `steemPath = "@author/permlink"` → `urlLeft + "/@author/permlink"`).
 
    **(b) Memo has no Steem path → vanity message:**
@@ -568,14 +568,16 @@ function handle_beneficiary_post():
     if post == null:
         hide_beneficiary_holder()
         return
-    metadata = fetch_post_metadata(post) # title, payout, votes, url; retry ×5
+    metadata = fetch_post_metadata(post) # title, root_author, root_title, payout, votes, url; retry ×5
     post.authorReputation   = fetch_author_reputation(post.author)
     post.authorFollowers    = fetch_follower_count(post.author)
     [post.medianRepOfFollowers, _] = fetch_median_follower_reputation_and_count(post.author)
     nullWeight = post.nullBenWeight / 100.0
     update_labels(post, nullWeight)
     show_beneficiary_holder(post)
-    start_scroll_animation(post.title, VAAS_INTERVAL / 2)
+    # scrolling text resolves to title, else "Re: @<root_author>: <root_title>" for blank
+    # titles (replies), else "(untitled)"
+    start_scroll_animation(resolve_title(post), VAAS_INTERVAL / 2)
 
 # ------------------------------------------------------------------
 # handle_promo_memo (types 1 and 2)
@@ -592,7 +594,7 @@ function handle_promo_memo():
                      if m.xferFrom == memo.xferFrom and m.xferMemo == memo.xferMemo)
     if memo.firstSteemPath != null:
         [promoAuthor, promoPermlink] = parse_steem_path(memo.firstSteemPath)
-        post = fetch_post_info(promoAuthor, promoPermlink)
+        post = fetch_post_info(promoAuthor, promoPermlink)  # includes root_author/root_title
         post.authorReputation   = fetch_author_reputation(promoAuthor)
         post.authorFollowers    = fetch_follower_count(promoAuthor)
         [post.medianRepOfFollowers, _] = fetch_median_follower_reputation_and_count(promoAuthor)
@@ -607,7 +609,7 @@ function handle_promo_memo():
     color = heat_color(by_burn_amount(burnAmount))       # §9.2 step 4
     show_promo_holder(color, burnAmount, target_url, memo)
     if memo.firstSteemPath != null:
-        scroll_text = post.title if post else "@{promoAuthor}"
+        scroll_text = resolve_title(post) if post else "@{promoAuthor}"   # title, else "Re: @<root_author>: <root_title>"
     else:
         scroll_text = memo.memo
     start_scroll_animation(scroll_text, VAAS_INTERVAL / 2)
@@ -632,3 +634,4 @@ To verify a re-implementation matches the original semantics:
 - [ ] SBD transfer of 0.5 SBD with `steemPerSbd = 7.5` yields `xferNormal = 3.75`.
 - [ ] Blank-memo transfers to `null` never enter Pool B.
 - [ ] A memo with a Steem path renders as a post promo with accumulated Promo amount and the **post title** as scrolling text (not the memo); a memo without a path renders as `"{from} says: {memo}"` with the memo as scrolling text.
+- [ ] A selected post with a **blank `title`** (a reply/comment) displays its scrolling text as `Re: @<root_author>: <root_title>` instead of an empty/`(untitled)` string; this applies to both beneficiary posts and promoted posts.
