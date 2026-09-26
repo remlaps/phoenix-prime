@@ -567,6 +567,20 @@
                 updateStatus();
                 return;
             }
+            // If we're further behind than MAXLIFE_BLOCKS (~24 h), skip ahead: every
+            // item from the missed blocks would already have expired, so drop the
+            // stale pools and jump to just within MAXLIFE_BLOCKS of the tip instead
+            // of crawling through a day (or more) of blocks one poll at a time.
+            if ((lastIrreversible - state.lastBlockChecked) > VAAS_CONFIG.MAXLIFE_BLOCKS) {
+                const skippedBlocks = lastIrreversible - state.lastBlockChecked;
+                state.lastBlockChecked = lastIrreversible - VAAS_CONFIG.MAXLIFE_BLOCKS;
+                state.currentBlock = state.lastBlockChecked;
+                state.postPool = [];
+                state.memoPool = [];
+                console.warn(`VAAS: skipped ${skippedBlocks} stale blocks, jumping to block #${state.lastBlockChecked}`);
+                persistShared();
+                updateStatus();
+            }
             // Drain at most MAX_BLOCKS_PER_PASS blocks per poll. The default of 1
             // preserves the original block-by-block catch-up (and its 30-block
             // display cadence); the cap simply guarantees a poll can never fire an
