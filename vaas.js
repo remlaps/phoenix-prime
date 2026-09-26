@@ -13,7 +13,10 @@
         MIN_MED_FOLLOWER_REP: 35.0,
         NODE_URL: 'https://api.steemit.com',
         URL_LEFT: 'https://steemit.com',
-        STORAGE_KEY: 'phoenix_prime_vaas_state_v1'
+        STORAGE_KEY: 'phoenix_prime_vaas_state_v1',
+        BLOCK_RETRIES: 3,          // retries per block fetch before pausing this pass
+        BLOCK_RETRY_MS: 500,       // backoff between block-fetch retries
+        MAX_BLOCKS_PER_PASS: 1     // cap blocks drained per poll (1 keeps block-by-block)
     };
 
     // In-memory pools
@@ -564,20 +567,49 @@
                 updateStatus();
                 return;
             }
-            if (state.lastBlockChecked >= lastIrreversible) return;
-            const blockNum = state.lastBlockChecked + 1;
-            const ops = await rpc('condenser_api.get_ops_in_block', [blockNum, false]);
-            if (ops && Array.isArray(ops)) {
-                await processBlockOps(ops, blockNum);
-            }
-            state.lastBlockChecked = blockNum;
-            state.currentBlock = blockNum;
-            updateStatus();
+            // Drain at most MAX_BLOCKS_PER_PASS blocks per poll. The default of 1
+            // preserves the original block-by-block catch-up (and its 30-block
+            // display cadence); the cap simply guarantees a poll can never fire an
+            // unbounded burst of get_ops_in_block RPCs.
+            let warnedBlockFailure = false;
+            let drained = 0;
+            while (state.lastBlockChecked < lastIrreversible && drained < VAAS_CONFIG.MAX_BLOCKS_PER_PASS) {
+                const blockNum = state.lastBlockChecked + 1;
+                // Ride out a transient upstream failure ("upstream temporarily
+                // unavailable") with a few backed-off retries instead of aborting the
+                // poll. If it still fails, stop this pass and retry the same block on
+                // the next poll (lastBlockChecked is left untouched, so no block is
+                // ever skipped).
+                let ops = null;
+                let fetchFailed = false;
+                for (let attempt = 0; attempt < VAAS_CONFIG.BLOCK_RETRIES; attempt++) {
+                    try {
+                        ops = await rpc('condenser_api.get_ops_in_block', [blockNum, false]);
+                        fetchFailed = false;
+                        break;
+                    } catch (e) {
+                        fetchFailed = true;
+                        if (!warnedBlockFailure) {
+                            console.warn('VAAS: block fetch failed (upstream busy), pausing catch-up until next poll:', e && e.message);
+                            warnedBlockFailure = true;
+                        }
+                        await sleep(VAAS_CONFIG.BLOCK_RETRY_MS);
+                    }
+                }
+                if (fetchFailed) break; // leave lastBlockChecked untouched; retry this block next poll
+                if (ops && Array.isArray(ops)) {
+                    await processBlockOps(ops, blockNum);
+                }
+                state.lastBlockChecked = blockNum;
+                state.currentBlock = blockNum;
+                updateStatus();
 
-            if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 1) {
-                await displayCycle();
-            } else if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 2) {
-                state.changePost = true;
+                if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 1) {
+                    await displayCycle();
+                } else if (blockNum % VAAS_CONFIG.VAAS_INTERVAL === 2) {
+                    state.changePost = true;
+                }
+                drained++;
             }
         } catch (e) {
             console.error('VAAS poll error:', e);
